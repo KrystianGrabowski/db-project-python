@@ -4,10 +4,11 @@ import json
 import argparse
 
 class Database:
-    def open_database(self):
-        self.conn = psycopg2.connect("dbname=test user=krystian password=password")
+    def open_database(self, database_name, user_name, password):
+        self.conn = psycopg2.connect("dbname={} user={} password={}".format(database_name, user_name,
+                                                                                password))
         self.cur = self.conn.cursor()
-        self.cur.execute("CREATE TABLE tabeleczka (id integer, val varchar);")
+        self.cur.execute("CREATE TABLE tabeleczka2 (id integer, val varchar);")
         self.conn.commit()
     
     def read_from_file(self, file_name):
@@ -21,6 +22,7 @@ class Database:
     def function_interpreter(self, name, args):
         if name == 'open':
             print("open function")
+            self.open_database(args['database'], args['login'], args['password'])
 
         elif name == 'leader':
             print("leader function")
@@ -55,9 +57,9 @@ def main():
     parser.add_argument("-f", "--filename", nargs=1, help="name of the file with JSON objects", type=str)
     args = parser.parse_args()
     db = Database()
-    print(args.filename[0])
-    db.read_from_file(args.filename[0])
-    db.open_database()
+    if (args.filename != None):
+        db.read_from_file(args.filename[0])
+    print("Endofstream")
 
 
 if __name__ == "__main__":
