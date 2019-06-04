@@ -5,19 +5,23 @@ import argparse
 
 class Database:
     def open_database(self, database_name, user_name, password):
-        self.conn = psycopg2.connect("dbname={} user={} password={}".format(database_name, user_name,
+        self.conn = psycopg2.connect("dbname={} user={} password={} host=localhost".format(database_name, user_name,
                                                                                 password))
         self.cur = self.conn.cursor()
-        self.cur.execute("CREATE TABLE tabeleczka2 (id integer, val varchar);")
+        self.read_from_file_sql("db_init.ddl")
         self.conn.commit()
     
+    def read_from_file_sql(self, file_name):
+        f = open(file_name, 'r')
+        self.cur.execute(f.read())
+        
     def read_from_file(self, file_name):
-        self.f = open(file_name, 'r')
-        for line in self.f:
+        f = open(file_name, 'r')
+        for line in f:
             f_dict = json.loads(line)
             key = next(iter(f_dict))
             self.function_interpreter(key, f_dict[key])
-        self.f.close()
+        f.close()
 
     def function_interpreter(self, name, args):
         if name == 'open':
@@ -59,6 +63,8 @@ def main():
     db = Database()
     if (args.filename != None):
         db.read_from_file(args.filename[0])
+    db.cur.close()
+    db.conn.close()
     print("Endofstream")
 
 
