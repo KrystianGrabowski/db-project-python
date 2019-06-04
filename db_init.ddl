@@ -12,8 +12,8 @@ CREATE TABLE member (
     id bigint NOT NULL, 
     password char(128) NOT NULL, 
     last_activity timestamp NOT NULL, 
-    leader bool DEFAULT 0 NOT NULL, 
-    dead bool DEFAULT 0 NOT NULL, 
+    leader bool DEFAULT 'false' NOT NULL, 
+    dead bool DEFAULT 'false' NOT NULL, 
     upvotes int4 DEFAULT 0 NOT NULL, 
     downvotes int4 DEFAULT 0 NOT NULL, 
     PRIMARY KEY (id)
