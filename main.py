@@ -51,46 +51,47 @@ class Database:
         return True
 
     def function_interpreter(self, name, args):
-        if name == 'open':
-            print("open function")
-            self.connect_to_database(args['database'], args['login'], args['password'])
-            if self.user_has_privileges("initialization"):
-                self.database_initialization("db_init.sql")
-                print("INIT INVOKED")
-            print("INIT FAIL")
-            self.cur.execute("insert into authority values (12);")
-            self.conn.commit()
+        data = [[ 1, 0, 2],
+           [ 2, 1, 0],
+           [ 3, 0, 0]]
+        error_occured = False
+        try:
+            if name == 'open':
+                self.connect_to_database(args['database'], args['login'], args['password'])
+                if self.user_has_privileges("initialization"):
+                    self.database_initialization("db_init.sql")
+                self.conn.commit()
 
-        elif name == 'leader':
-            print("leader function")
+            elif name == 'leader':
+                pass
 
-        elif name == 'protest':
-            print("protest function")
+            elif name == 'protest':
+                pass
 
-        elif name == 'support':
-            print("support function")
+            elif name == 'support':
+                pass
 
-        elif name == 'upvote':
-            print("upvote function")
+            elif name == 'upvote':
+                pass
 
-        elif name == 'downvote':
-            print("downvote function")
+            elif name == 'downvote':
+                pass
 
-        elif name == 'actions':
-            print("actions function")
+            elif name == 'actions':
+                pass
 
-        elif name == 'projects':
-            print("projects function")
+            elif name == 'projects':
+                pass
 
-        elif name == 'votes':
-            print("votes function")
+            elif name == 'votes':
+                pass
 
-        elif name == 'trolls':
-            print("trolls function")
-        
-        else:
-            return -1
-        return 0
+            elif name == 'trolls':
+                pass
+            
+        except Exception:
+            error_occured = True
+        print(self.status(error_occured, data))
     
     def start_stream(self):
         print("Type '\q' to quit")
@@ -100,6 +101,15 @@ class Database:
             if (command == "\q"):
                 break
             self.interpret_string_as_json(command)
+    
+    def status(self, error_occured, data):
+            if error_occured:
+                return json.dumps({'status': 'ERROR'})
+            else:
+                if data is None:
+                    return json.dumps({'status': 'OK'})
+                else:
+                    return json.dumps({'status': 'OK', 'data': data})
 
 
 
