@@ -58,7 +58,7 @@ class Database:
                 self.database_initialization("db_init.sql")
                 print("INIT INVOKED")
             print("INIT FAIL")
-            self.cur.execute("insert into authority values (4);")
+            self.cur.execute("insert into authority values (12);")
             self.conn.commit()
 
         elif name == 'leader':
