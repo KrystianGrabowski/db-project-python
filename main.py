@@ -100,7 +100,6 @@ class Database:
                 pass
             
         except Exception as e:
-            data = e.message
             error_occured = True
         print(self.status(error_occured, data))
     
