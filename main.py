@@ -8,7 +8,7 @@ class Database:
         self.conn = psycopg2.connect("dbname={} user={} password={} host=localhost".format(database_name, user_name,
                                                                                 password))
         self.cur = self.conn.cursor()
-        self.read_from_file_sql("db_init.ddl")
+        self.read_from_file_sql("db_init.sql")
         self.conn.commit()
     
     def read_from_file_sql(self, file_name):
@@ -61,10 +61,10 @@ def main():
     parser.add_argument("-f", "--filename", nargs=1, help="name of the file with JSON objects", type=str)
     args = parser.parse_args()
     db = Database()
-    if (args.filename != None):
+    if (args.filename != None and args.init):
         db.read_from_file(args.filename[0])
-    db.cur.close()
-    db.conn.close()
+        db.cur.close()
+        db.conn.close()
     print("Endofstream")
 
 
