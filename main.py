@@ -2,6 +2,7 @@ import psycopg2
 import json
 #from Crypto.Cipher import AES
 import argparse
+import re
 
 class Database:
     def __init__(self):
@@ -16,17 +17,19 @@ class Database:
         if 0 <= level:
             self.__privilege_level = level
 
-
-    def open_database(self, database_name, user_name, password):
+    def connect_to_database(self, database_name, user_name, password):
         self.conn = psycopg2.connect("dbname={} user={} password={} host=localhost".format(database_name, user_name,
                                                                                 password))
         self.cur = self.conn.cursor()
-        self.read_from_file_sql("db_init.sql")
         self.conn.commit()
+
+    def database_initialization(self, file_name):
+        self.read_from_file_sql(file_name)
     
     def read_from_file_sql(self, file_name):
         f = open(file_name, 'r')
         self.cur.execute(f.read())
+        self.conn.commit()
     
     def interpret_string_as_json(self, string):
         f_dict = json.loads(string)
@@ -39,10 +42,24 @@ class Database:
             self.interpret_string_as_json(line)
         f.close()
 
+    def user_has_privileges(self, function_name):
+        app_user_privileges = []
+        if self.privilege_level == 0:
+            if function_name in app_user_privileges:
+                return True
+            return False
+        return True
+
     def function_interpreter(self, name, args):
         if name == 'open':
             print("open function")
-            self.open_database(args['database'], args['login'], args['password'])
+            self.connect_to_database(args['database'], args['login'], args['password'])
+            if self.user_has_privileges("initialization"):
+                self.database_initialization("db_init.sql")
+                print("INIT INVOKED")
+            print("INIT FAIL")
+            self.cur.execute("insert into authority values (4);")
+            self.conn.commit()
 
         elif name == 'leader':
             print("leader function")
@@ -70,9 +87,19 @@ class Database:
 
         elif name == 'trolls':
             print("trolls function")
+        
+        else:
+            return -1
+        return 0
     
     def start_stream(self):
-        pass
+        print("Type '\q' to quit")
+        command = ""
+        while(True):
+            command = input(">>> ")
+            if (command == "\q"):
+                break
+            self.interpret_string_as_json(command)
 
 
 
@@ -88,7 +115,7 @@ def main():
         db.cur.close()
         db.conn.close()
     else:
-        db.start_stream() 
+        db.start_stream()
 
     print("Endofstream")
 

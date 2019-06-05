@@ -52,8 +52,5 @@ ALTER TABLE downvote ADD CONSTRAINT protest_has_downvote FOREIGN KEY (action_id)
 ALTER TABLE upvote ADD CONSTRAINT protest_has_upvote FOREIGN KEY (action_id) REFERENCES protest (id);
 ALTER TABLE downvote ADD CONSTRAINT support_has_downvote FOREIGN KEY (action_id) REFERENCES support (id);
 ALTER TABLE upvote ADD CONSTRAINT support_has_upvote FOREIGN KEY (action_id) REFERENCES support (id);
-
 CREATE USER testapp WITH ENCRYPTED PASSWORD 'testpass';
---insert into authority
---    values (1);
 --GRANT ALL PRIVILEGES ON  DATABASE test TO testapp ;
