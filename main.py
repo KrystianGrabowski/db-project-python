@@ -1,6 +1,6 @@
 import psycopg2
 import json
-#from Crypto.Cipher import AES
+from Crypto.Cipher import AES
 import argparse
 import re
 
@@ -50,10 +50,20 @@ class Database:
             return False
         return True
 
+    def insert_user(self, id, password, last_activity, leader):
+        self.cur.execute("""INSERT INTO member(id, password, last_activity, leader) 
+                            VALUES({}, crypt('{}', gen_salt('md5')), to_timestamp({}), '{}' )""".format(id, password, last_activity, leader));
+        self.conn.commit()
+
+    def check_password(self, id, password):
+        self.cur.execute("SELECT * FROM member m WHERE m.id = {} AND m.password = crypt('{}', m.password);".format(id, password))
+        if self.cur.fetchone() is None:
+            return False
+        else: 
+            return True
+
     def function_interpreter(self, name, args):
-        data = [[ 1, 0, 2],
-           [ 2, 1, 0],
-           [ 3, 0, 0]]
+        data = None
         error_occured = False
         try:
             if name == 'open':
@@ -63,7 +73,7 @@ class Database:
                 self.conn.commit()
 
             elif name == 'leader':
-                pass
+                self.insert_user(args['member'], str(args['password']), args['timestamp'], 'true')
 
             elif name == 'protest':
                 pass
@@ -89,7 +99,8 @@ class Database:
             elif name == 'trolls':
                 pass
             
-        except Exception:
+        except Exception as e:
+            data = e.message
             error_occured = True
         print(self.status(error_occured, data))
     
@@ -120,8 +131,14 @@ def main():
     args = parser.parse_args()
     db = Database()
     db.privilege_level = 1 if args.init else 0
-    if (args.filename != None):
+    if (args.filename is not None):
         db.read_from_file(args.filename[0])
+        
+        """print(db.check_password(1, "abc" ))
+        print(db.check_password(1, "acb" ))
+        print(db.check_password(2, "aaa" ))
+        print(db.check_password(2, "asd" ))
+        """
         db.cur.close()
         db.conn.close()
     else:

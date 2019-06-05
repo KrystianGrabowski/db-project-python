@@ -10,7 +10,7 @@ CREATE TABLE downvote (
 );
 CREATE TABLE member (
     id bigint NOT NULL, 
-    password char(128) NOT NULL, 
+    password varchar(128) NOT NULL, 
     last_activity timestamp NOT NULL, 
     leader bool DEFAULT 'false' NOT NULL, 
     dead bool DEFAULT 'false' NOT NULL, 
@@ -55,3 +55,4 @@ ALTER TABLE upvote ADD CONSTRAINT support_has_upvote FOREIGN KEY (action_id) REF
 
 CREATE USER testapp WITH ENCRYPTED PASSWORD 'testpass';
 GRANT SELECT, INSERT, UPDATE ON TABLE authority, member, project, protest, support, downvote, upvote TO testapp;
+CREATE EXTENSION pgcrypto;
