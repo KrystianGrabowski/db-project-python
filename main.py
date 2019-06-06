@@ -5,19 +5,6 @@ import argparse
 import sys
 
 class Database:
-    dictionary = {
-        "open" : lambda instance, args : instance.open_function(args),
-        "leader" : lambda instance, args : instance.leader_function(args),
-        "protest" : lambda instance, args : instance.protest_function(args),
-        "support" : lambda instance, args : instance.support_function(args),
-        "upvote" : lambda instance, args : instance.upvote_function(args),
-        "downvote" : lambda instance, args : instance.downvote_function(args),
-        "actions" : lambda instance, args : instance.actions_function(args),
-        "projects" : lambda instance, args : instance.projects_function(args),
-        "votes" : lambda instance, args : instance.votes_function(args),
-        "trolls" : lambda instance, args : instance.trolls_function(args)
-    }
-
     def __init__(self):
         self.__privilege_level = 0;
 
@@ -33,7 +20,6 @@ class Database:
     def connect_to_database(self, database_name, user_name, password):
         self.conn = psycopg2.connect(dbname=database_name, user=user_name, password=password, host="localhost")
         self.cur = self.conn.cursor()
-        self.conn.commit()
 
     def database_initialization(self, file_name):
         self.read_from_file_sql(file_name)
@@ -65,7 +51,6 @@ class Database:
     def insert_user(self, id, password, last_activity, leader):
         self.cur.execute("""INSERT INTO member(id, password, last_activity, leader) 
                             VALUES(%s, crypt(%s, gen_salt('md5')), to_timestamp(%s), %s )""", (id, password, last_activity, leader));
-        self.conn.commit()
 
     def check_password(self, id, password):
         self.cur.execute("SELECT * FROM member m WHERE m.id = %s AND m.password = crypt(%s, m.password);", (id, password))
@@ -79,7 +64,6 @@ class Database:
         self.connect_to_database(args['database'], args['login'], args['password'])
         if self.user_has_privileges("initialization"):
             self.database_initialization("db_init.sql")
-        self.conn.commit()
 
     def leader_function(self, args):
         self.insert_user(args['member'], str(args['password']), args['timestamp'], 'true')
@@ -113,21 +97,21 @@ class Database:
     def function_interpreter(self, name, args):
         data = None
         error_occured = False
-        #try:
-        lambda function_name : {
-            "open" : lambda args : self.open_function(args),
-            "leader" : lambda args : self.leader_function(args),
-            "protest" : lambda args : self.protest_function(args),
-            "support" : lambda args : self.support_function(args),
-            "upvote" : lambda args : self.upvote_function(args),
-            "downvote" : lambda args : self.downvote_function(args),
-            "actions" : lambda args : self.actions_function(args),
-            "projects" : lambda args : self.projects_function(args),
-            "votes" : lambda args : self.votes_function(args),
-            "trolls" : lambda args : self.trolls_function(args)}[function_name](name)
-        Database.dictionary[name](self, args)
-    #except Exception as e:
-        #error_occured = True
+        try:
+            (lambda function_name : {
+                "open" : lambda args : self.open_function(args),
+                "leader" : lambda args : self.leader_function(args),
+                "protest" : lambda args : self.protest_function(args),
+                "support" : lambda args : self.support_function(args),
+                "upvote" : lambda args : self.upvote_function(args),
+                "downvote" : lambda args : self.downvote_function(args),
+                "actions" : lambda args : self.actions_function(args),
+                "projects" : lambda args : self.projects_function(args),
+                "votes" : lambda args : self.votes_function(args),
+                "trolls" : lambda args : self.trolls_function(args)}[function_name]
+            )(name)(args)
+        except Exception as e:
+            error_occured = True
         print(self.status(error_occured, data))
 
     
@@ -143,13 +127,19 @@ class Database:
 
 
     def status(self, error_occured, data):
-            if error_occured:
-                return json.dumps({'status': 'ERROR'})
+        if not error_occured:
+            try:
+                self.conn.commit()
+            except Exception as e:
+                error_occured = True
+
+        if error_occured:
+            return json.dumps({'status': 'ERROR'})
+        else:
+            if data is None:
+                return json.dumps({'status': 'OK'})
             else:
-                if data is None:
-                    return json.dumps({'status': 'OK'})
-                else:
-                    return json.dumps({'status': 'OK', 'data': data})
+                return json.dumps({'status': 'OK', 'data': data})
 
 
 
