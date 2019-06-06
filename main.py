@@ -5,6 +5,19 @@ import argparse
 import sys
 
 class Database:
+    dictionary = {
+        "open" : lambda instance, args : instance.open_function(args),
+        "leader" : lambda instance, args : instance.leader_function(args),
+        "protest" : lambda instance, args : instance.protest_function(args),
+        "support" : lambda instance, args : instance.support_function(args),
+        "upvote" : lambda instance, args : instance.upvote_function(args),
+        "downvote" : lambda instance, args : instance.downvote_function(args),
+        "actions" : lambda instance, args : instance.actions_function(args),
+        "projects" : lambda instance, args : instance.projects_function(args),
+        "votes" : lambda instance, args : instance.votes_function(args),
+        "trolls" : lambda instance, args : instance.trolls_function(args)
+    }
+
     def __init__(self):
         self.__privilege_level = 0;
 
@@ -61,46 +74,62 @@ class Database:
         else:
             return True
 
+
+    def open_function(self, args):
+        self.connect_to_database(args['database'], args['login'], args['password'])
+        if self.user_has_privileges("initialization"):
+            self.database_initialization("db_init.sql")
+        self.conn.commit()
+
+    def leader_function(self, args):
+        self.insert_user(args['member'], str(args['password']), args['timestamp'], 'true')
+    
+    #TO DO
+    def protest_function(self, args):
+        pass
+
+    def support_function(self, args):
+        pass
+    
+    def upvote_function(self, args):
+        pass
+
+    def downvote_function(self, args):
+        pass
+
+    def actions_function(self, args):
+        pass
+
+    def projects_function(self, args):
+        pass
+    
+    def votes_function(self, args):
+        pass
+
+    def trolls_function(self, args):
+        pass
+
+
     def function_interpreter(self, name, args):
         data = None
         error_occured = False
-        try:
-            if name == 'open':
-                self.connect_to_database(args['database'], args['login'], args['password'])
-                if self.user_has_privileges("initialization"):
-                    self.database_initialization("db_init.sql")
-                self.conn.commit()
-
-            elif name == 'leader':
-                self.insert_user(args['member'], str(args['password']), args['timestamp'], 'true')
-
-            elif name == 'protest':
-                pass
-
-            elif name == 'support':
-                pass
-
-            elif name == 'upvote':
-                pass
-    
-            elif name == 'downvote':
-                pass
-
-            elif name == 'actions':
-                pass
-
-            elif name == 'projects':
-                pass
-
-            elif name == 'votes':
-                pass
-
-            elif name == 'trolls':
-                pass
-            
-        except Exception as e:
-            error_occured = True
+        #try:
+        lambda function_name : {
+            "open" : lambda args : self.open_function(args),
+            "leader" : lambda args : self.leader_function(args),
+            "protest" : lambda args : self.protest_function(args),
+            "support" : lambda args : self.support_function(args),
+            "upvote" : lambda args : self.upvote_function(args),
+            "downvote" : lambda args : self.downvote_function(args),
+            "actions" : lambda args : self.actions_function(args),
+            "projects" : lambda args : self.projects_function(args),
+            "votes" : lambda args : self.votes_function(args),
+            "trolls" : lambda args : self.trolls_function(args)}[function_name](name)
+        Database.dictionary[name](self, args)
+    #except Exception as e:
+        #error_occured = True
         print(self.status(error_occured, data))
+
     
     def start_stream(self):
         while 1:
