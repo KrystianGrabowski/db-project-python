@@ -18,8 +18,7 @@ class Database:
             self.__privilege_level = level
 
     def connect_to_database(self, database_name, user_name, password):
-        self.conn = psycopg2.connect("dbname={} user={} password={} host=localhost".format(database_name, user_name,
-                                                                                password))
+        self.conn = psycopg2.connect(dbname=database_name, user=user_name, password=password, host="localhost")
         self.cur = self.conn.cursor()
         self.conn.commit()
 
@@ -52,14 +51,14 @@ class Database:
 
     def insert_user(self, id, password, last_activity, leader):
         self.cur.execute("""INSERT INTO member(id, password, last_activity, leader) 
-                            VALUES({}, crypt('{}', gen_salt('md5')), to_timestamp({}), '{}' )""".format(id, password, last_activity, leader));
+                            VALUES(%s, crypt(%s, gen_salt('md5')), to_timestamp(%s), %s )""", (id, password, last_activity, leader));
         self.conn.commit()
 
     def check_password(self, id, password):
-        self.cur.execute("SELECT * FROM member m WHERE m.id = {} AND m.password = crypt('{}', m.password);".format(id, password))
+        self.cur.execute("SELECT * FROM member m WHERE m.id = %s AND m.password = crypt(%s, m.password);", (id, password))
         if self.cur.fetchone() is None:
             return False
-        else: 
+        else:
             return True
 
     def function_interpreter(self, name, args):
@@ -83,7 +82,7 @@ class Database:
 
             elif name == 'upvote':
                 pass
-
+    
             elif name == 'downvote':
                 pass
 
@@ -132,8 +131,8 @@ def main():
     db.privilege_level = 1 if args.init else 0
     if (args.filename is not None):
         db.read_from_file(args.filename[0])
-        
-        """print(db.check_password(1, "abc" ))
+        """
+        print(db.check_password(1, "abc" ))
         print(db.check_password(1, "acb" ))
         print(db.check_password(2, "aaa" ))
         print(db.check_password(2, "asd" ))
