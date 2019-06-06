@@ -2,7 +2,7 @@ import psycopg2
 import json
 from Crypto.Cipher import AES
 import argparse
-import re
+import sys
 
 class Database:
     def __init__(self):
@@ -103,14 +103,16 @@ class Database:
         print(self.status(error_occured, data))
     
     def start_stream(self):
-        print("Type '\q' to quit")
-        command = ""
-        while(True):
-            command = input(">>> ")
-            if (command == "\q"):
+        while 1:
+            try: 
+                line = sys.stdin.readline()
+                if not line:
+                    break
+                self.interpret_string_as_json(line)
+            except KeyboardInterrupt:
                 break
-            self.interpret_string_as_json(command)
-    
+
+
     def status(self, error_occured, data):
             if error_occured:
                 return json.dumps({'status': 'ERROR'})
@@ -131,18 +133,12 @@ def main():
     db.privilege_level = 1 if args.init else 0
     if (args.filename is not None):
         db.read_from_file(args.filename[0])
-        """
-        print(db.check_password(1, "abc" ))
-        print(db.check_password(1, "acb" ))
-        print(db.check_password(2, "aaa" ))
-        print(db.check_password(2, "asd" ))
-        """
         db.cur.close()
         db.conn.close()
     else:
         db.start_stream()
 
-    print("Endofstream")
+    print("END")
 
 
 if __name__ == "__main__":
