@@ -62,27 +62,33 @@ class Database:
                             VALUES(%s, crypt(%s, gen_salt('md5')), to_timestamp(%s), %s )""", (id, password, last_activity, leader));
 
     def check_password(self, id, password):
-        self.cur.execute("SELECT * FROM member m WHERE m.id = %s AND m.password = crypt(%s, m.password);", (id, password))
-        if self.cur.fetchone() is None:
-            return False
-        else:
-            return True
+        user_tuple = self.get_user_by_id(id)
+        if user_tuple is not None:
+            return True if self.compare_passwords(password, user_tuple[1]) else False
+        return None
+
+    def get_user_by_id(self, id):
+        self.cur.execute("SELECT * FROM member m WHERE m.id = %s;", (id,))
+        return self.cur.fetchone()
     
     def compare_passwords(self, password, db_password):
-        self.cur.execute("SELECT * FROM member m WHERE m.id = %s AND m.password = crypt(%s, m.password);", (id, password))
+        self.cur.execute("SELECT crypt(%s, %s) = %s;", (password, db_password, db_password))
+        return self.cur.fetchone()[0]
 
     def update_user_timestamp(self, id, password, last_activity):
         self.cur.execute("SELECT * FROM member WHERE id=%s", (id,))
-        if self.cur.fetchone() is not None:
-            if self.check_password(id, password):
+        user_tuple = self.cur.fetchone()
+        if user_tuple is not None:
+            if self.compare_passwords(password, user_tuple[1]):
                 self.cur.execute("UPDATE member SET last_activity=to_timestamp(%s) where id=%s", (last_activity, id))
             else:
-                raise Exception('This is the exception you expect to handle')
+                raise Exception('Wrong password')
         else:
             self.insert_user(id, password, last_activity, 'false')
 
 
-        
+       
+    # Funcje API _START_
 
     def open_function(self, args):
         self.connect_to_database(args['database'], args['login'], args['password'])
@@ -118,6 +124,7 @@ class Database:
     def trolls_function(self, args):
         pass
 
+    # funkcje API _END_
 
     def function_interpreter(self, name, args):
         data = None
@@ -182,10 +189,16 @@ def main():
     db = Database(args.init, args.debug)
     if (args.filename is not None):
         db.read_from_file(args.filename[0])
-        db.cur.close()
-        db.conn.close()
     else:
         db.start_stream()
+
+    print(db.check_password(1, "abc" ))
+    print(db.check_password(1, "acb" ))
+    print(db.check_password(2, "aaa" ))
+    print(db.check_password(2, "asd" ))
+        
+    db.cur.close()
+    db.conn.close()
 
     print("END")
 
