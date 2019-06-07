@@ -56,38 +56,55 @@ class Database:
     def user_set_privilege_level(self, name):
         self.privilege_level = 1 if name == 'testuser' else 0
 
-
-    def insert_user(self, id, password, last_activity, leader):
-        self.cur.execute("""INSERT INTO member(id, password, last_activity, leader) 
-                            VALUES(%s, crypt(%s, gen_salt('md5')), to_timestamp(%s), %s )""", (id, password, last_activity, leader));
-
     def check_password(self, id, password):
-        user_tuple = self.get_user_by_id(id)
+        user_tuple = self.get_member_by_id(id)
         if user_tuple is not None:
             return True if self.compare_passwords(password, user_tuple[1]) else False
         return None
 
-    def get_user_by_id(self, id):
-        self.cur.execute("SELECT * FROM member m WHERE m.id = %s;", (id,))
-        return self.cur.fetchone()
-    
     def compare_passwords(self, password, db_password):
         self.cur.execute("SELECT crypt(%s, %s) = %s;", (password, db_password, db_password))
         return self.cur.fetchone()[0]
 
     def update_user_timestamp(self, id, password, last_activity):
-        self.cur.execute("SELECT * FROM member WHERE id=%s", (id,))
+        self.cur.execute("SELECT * FROM member WHERE id=%s;", (id,))
         user_tuple = self.cur.fetchone()
         if user_tuple is not None:
             if self.compare_passwords(password, user_tuple[1]):
-                self.cur.execute("UPDATE member SET last_activity=to_timestamp(%s) where id=%s", (last_activity, id))
+                self.cur.execute("UPDATE member SET last_activity=to_timestamp(%s) where id=%s;", (last_activity, id))
             else:
                 raise Exception('Wrong password')
         else:
             self.insert_user(id, password, last_activity, 'false')
 
+    # SELECT _START_
 
+    def get_member_by_id(self, id):
+        self.cur.execute("SELECT * FROM member x WHERE x.id=%s;", (id,))
+        return self.cur.fetchone()
+
+    def get_project_by_id(self, id):
+        self.cur.execute("SELECT * FROM project p WHERE p.id=%s;", (id,))
+        return self.cur.fetchone()
+    
+    # SELECT _END_
+
+    # INSERT _START_
+
+    def insert_user(self, id, password, last_activity, leader):
+        self.cur.execute("""INSERT INTO member(id, password, last_activity, leader) 
+                            VALUES(%s, crypt(%s, gen_salt('md5')), to_timestamp(%s), %s );""", (id, password, last_activity, leader));
+
+    def insert_project(self, id, authority_id):
+        self.cur.execute("SELECT * FROM authority a WHERE a.id = %s;", (authority_id,))
+        if self.cur.fetchone() is None:
+            self.cur.execute("INSERT INTO authority VALUES(%s);", (authority_id,))
+
+        self.cur.execute("""INSERT INTO project(id, authority_id) 
+                            VALUES(%s, %s);""", (id, authority_id));
        
+    # INSERT _END_
+
     # Funcje API _START_
 
     def open_function(self, args):
@@ -102,6 +119,14 @@ class Database:
     #TO DO
     def protest_function(self, args):
         self.update_user_timestamp(args['member'], args['password'], args['timestamp'])
+        if self.get_project_by_id(args["project"]) is None:
+            if "authority" in args:
+                self.insert_project(args["project"], args["authority"])
+            else:
+                raise KeyError('No project with given id, please enter the authority')
+
+        self.cur.execute("""INSERT INTO protest(id, project_id, member_id) 
+                            VALUES(%s, %s, %s );""", (args["action"], args["project"], args["member"]));
 
     def support_function(self, args):
         pass
@@ -192,11 +217,6 @@ def main():
     else:
         db.start_stream()
 
-    print(db.check_password(1, "abc" ))
-    print(db.check_password(1, "acb" ))
-    print(db.check_password(2, "aaa" ))
-    print(db.check_password(2, "asd" ))
-        
     db.cur.close()
     db.conn.close()
 
