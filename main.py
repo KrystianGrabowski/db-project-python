@@ -5,8 +5,9 @@ import argparse
 import sys
 
 class Database:
-    def __init__(self):
+    def __init__(self, db_init):
         self.__privilege_level = 0;
+        self.__db_init = db_init;
 
     @property
     def privilege_level(self):
@@ -14,9 +15,8 @@ class Database:
     
     @privilege_level.setter
     def privilege_level(self, level):
-        if 0 <= level:
+        if 0 <= level <= 2:
             self.__privilege_level = level
-
     def connect_to_database(self, database_name, user_name, password):
         self.conn = psycopg2.connect(dbname=database_name, user=user_name, password=password, host="localhost")
         self.cur = self.conn.cursor()
@@ -47,6 +47,12 @@ class Database:
                 return True
             return False
         return True
+    
+    def user_set_privilege_level(self, name):
+        privilege_level = 1 if name == 'init' else 0
+
+    def user_set_privilege_level(self, name):
+
 
     def insert_user(self, id, password, last_activity, leader):
         self.cur.execute("""INSERT INTO member(id, password, last_activity, leader) 
@@ -62,7 +68,8 @@ class Database:
 
     def open_function(self, args):
         self.connect_to_database(args['database'], args['login'], args['password'])
-        if self.user_has_privileges("initialization"):
+
+        if self.__db_init and user_has_privileges('initialization'):
             self.database_initialization("db_init.sql")
 
     def leader_function(self, args):
@@ -148,8 +155,7 @@ def main():
     parser.add_argument("-i","--init", help="initialization of database", action="store_true")
     parser.add_argument("-f", "--filename", nargs=1, help="name of the file with JSON objects", type=str)
     args = parser.parse_args()
-    db = Database()
-    db.privilege_level = 1 if args.init else 0
+    db = Database(args.init)
     if (args.filename is not None):
         db.read_from_file(args.filename[0])
         db.cur.close()
