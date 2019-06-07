@@ -5,9 +5,10 @@ import argparse
 import sys
 
 class Database:
-    def __init__(self, db_init):
-        self.__privilege_level = 0;
-        self.__db_init = db_init;
+    def __init__(self, db_init, debug_mode):
+        self.__privilege_level = 0
+        self.__db_init = db_init
+        self.__debug_mode = debug_mode
 
     @property
     def privilege_level(self):
@@ -17,6 +18,9 @@ class Database:
     def privilege_level(self, level):
         if 0 <= level <= 2:
             self.__privilege_level = level
+        else:
+            self.__privilege_level = 0
+
     def connect_to_database(self, database_name, user_name, password):
         self.conn = psycopg2.connect(dbname=database_name, user=user_name, password=password, host="localhost")
         self.cur = self.conn.cursor()
@@ -42,6 +46,7 @@ class Database:
 
     def user_has_privileges(self, function_name):
         app_user_privileges = []
+        print(self.privilege_level)
         if self.privilege_level == 0:
             if function_name in app_user_privileges:
                 return True
@@ -49,9 +54,7 @@ class Database:
         return True
     
     def user_set_privilege_level(self, name):
-        privilege_level = 1 if name == 'init' else 0
-
-    def user_set_privilege_level(self, name):
+        self.privilege_level = 1 if name == 'testuser' else 0
 
 
     def insert_user(self, id, password, last_activity, leader):
@@ -64,12 +67,27 @@ class Database:
             return False
         else:
             return True
+    
+    def compare_passwords(self, password, db_password):
+        self.cur.execute("SELECT * FROM member m WHERE m.id = %s AND m.password = crypt(%s, m.password);", (id, password))
 
+    def update_user_timestamp(self, id, password, last_activity):
+        self.cur.execute("SELECT * FROM member WHERE id=%s", (id,))
+        if self.cur.fetchone() is not None:
+            if self.check_password(id, password):
+                self.cur.execute("UPDATE member SET last_activity=to_timestamp(%s) where id=%s", (last_activity, id))
+            else:
+                raise Exception('This is the exception you expect to handle')
+        else:
+            self.insert_user(id, password, last_activity, 'false')
+
+
+        
 
     def open_function(self, args):
         self.connect_to_database(args['database'], args['login'], args['password'])
-
-        if self.__db_init and user_has_privileges('initialization'):
+        self.user_set_privilege_level(args['login'])
+        if self.__db_init and self.user_has_privileges('initialization'):
             self.database_initialization("db_init.sql")
 
     def leader_function(self, args):
@@ -77,7 +95,7 @@ class Database:
     
     #TO DO
     def protest_function(self, args):
-        pass
+        self.update_user_timestamp(args['member'], args['password'], args['timestamp'])
 
     def support_function(self, args):
         pass
@@ -118,6 +136,11 @@ class Database:
                 "trolls" : lambda args : self.trolls_function(args)}[function_name]
             )(name)(args)
         except Exception as e:
+            if self.__debug_mode:
+                if hasattr(e, 'message'):
+                    print(e.message)
+                else:
+                    print(e)
             error_occured = True
         print(self.status(error_occured, data))
 
@@ -153,9 +176,10 @@ class Database:
 def main():
     parser = argparse.ArgumentParser(description='Projekt: System Zarządzania Partią Polityczną')
     parser.add_argument("-i","--init", help="initialization of database", action="store_true")
+    parser.add_argument("-g","--debug", help="show information about errors", action="store_true")
     parser.add_argument("-f", "--filename", nargs=1, help="name of the file with JSON objects", type=str)
     args = parser.parse_args()
-    db = Database(args.init)
+    db = Database(args.init, args.debug)
     if (args.filename is not None):
         db.read_from_file(args.filename[0])
         db.cur.close()
