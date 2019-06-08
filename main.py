@@ -33,7 +33,7 @@ class Database:
         f.close()
 
     def user_has_privileges(self, is_leader, function_name):
-        app_user_privileges = ["protest", "downvote", "upvote"]
+        app_user_privileges = ["protest", "support", "downvote", "upvote"]
         if not is_leader and function_name not in app_user_privileges:
             return False
         return True
@@ -115,36 +115,63 @@ class Database:
     def leader_function(self, args):
         self.insert_user(args['member'], str(args['password']), args['timestamp'], 'true')
     
-    #TO DO
-    def protest_function(self, args):
+
+    def check_correctness(self, name, args):
         is_leader = self.update_user_return_true_if_leader(args['member'], args['password'], args['timestamp'])
-        self.check_user_privileges(is_leader, "protest")    
+        self.check_user_privileges(is_leader, name)
+
+    def check_project_existence(self, args):
         if self.get_project_by_id(args["project"]) is None:
             if "authority" in args:
                 self.insert_project(args["project"], args["authority"])
             else:
-                raise KeyError('No project with given id, please enter the authority')
+                raise KeyError('No project with given id, please enter the authority')        
+     
+    def action_function(self, args):
+        self.check_correctness("protest", args)
+        self.check_project_existence(args)
+        self.cur.execute("""INSERT INTO action(id, project_id, member_id, action_type) 
+                            VALUES(%s, %s, %s %s);""", (args["action"], args["project"], args["member"]));
 
-        self.cur.execute("""INSERT INTO protest(id, project_id, member_id) 
-                            VALUES(%s, %s, %s );""", (args["action"], args["project"], args["member"]));
+    def protest_function(self, args):
+        self.check_correctness("protest", args)
+        self.check_project_existence(args)
+        self.cur.execute("""INSERT INTO action(id, project_id, member_id, action_type) 
+                            VALUES(%s, %s, %s, %s);""", (args["action"], args["project"], args["member"], 'false'));
 
     def support_function(self, args):
-        is_leader = self.update_user_return_true_if_leader(args['member'], args['password'], args['timestamp'])
-        self.check_user_privileges(is_leader, "support")    
-        if self.get_project_by_id(args["project"]) is None:
-            if "authority" in args:
-                self.insert_project(args["project"], args["authority"])
-            else:
-                raise KeyError('No project with given id, please enter the authority')
-
-        self.cur.execute("""INSERT INTO support(id, project_id, member_id) 
-                            VALUES(%s, %s, %s );""", (args["action"], args["project"], args["member"]));
+        self.check_correctness("support", args)
+        self.check_project_existence(args)
+        self.cur.execute("""INSERT INTO action(id, project_id, member_id, action_type) 
+                            VALUES(%s, %s, %s, %s );""", (args["action"], args["project"], args["member"], 'true'));
     
+    #TO DO
+    def user_can_vote_for_action(self, user_id, action_id):
+        self.cur.execute("SELECT * FROM upvote WHERE member_id=%s AND action_id=%s;", (user_id, action_id))
+        if self.cur.fetchone() is not None:
+            return False
+        self.cur.execute("SELECT * FROM downvote WHERE member_id=%s AND action_id=%s;", (user_id, action_id))
+        if self.cur.fetchone() is not None:
+            return False
+        return True
+
     def upvote_function(self, args):
-        pass
+        self.check_correctness("upvote", args)
+        print(self.user_can_vote_for_action(args['member'], args['action']))
+        if self.user_can_vote_for_action(args['member'], args['action']):
+            self.cur.execute("""INSERT INTO upvote(member_id, action_id) 
+                                VALUES(%s, %s );""", (args['member'], args['action']))
+        else:
+            raise Exception('User has already voted')
 
     def downvote_function(self, args):
-        pass
+        self.check_correctness("downvote", args)
+        print(self.user_can_vote_for_action(args['member'], args['action']))
+        if self.user_can_vote_for_action(args['member'], args['action']):
+            self.cur.execute("""INSERT INTO downvote(member_id, action_id) 
+                                VALUES(%s, %s );""", (args["member"], args["action"]))
+        else:
+            raise Exception('User has already voted')
 
     def actions_function(self, args):
         pass
