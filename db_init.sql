@@ -1,9 +1,9 @@
 CREATE TABLE authority (
-    id bigint NOT NULL, 
+    id int4 NOT NULL, 
     PRIMARY KEY (id)
 );
 CREATE TABLE member (
-    id bigint NOT NULL, 
+    id int4 NOT NULL, 
     password varchar(128) NOT NULL, 
     last_activity timestamp NOT NULL, 
     leader bool DEFAULT 'false' NOT NULL, 
@@ -13,12 +13,12 @@ CREATE TABLE member (
     PRIMARY KEY (id)
 );
 CREATE TABLE project (
-    id bigint NOT NULL, 
+    id int4 NOT NULL, 
     authority_id int4 NOT NULL, 
     PRIMARY KEY (id)
 );
 CREATE TABLE action (
-    id bigint NOT NULL, 
+    id int4 NOT NULL, 
     project_id int4 NOT NULL, 
     member_id int4 NOT NULL,
     action_type bool NOT NULL,
@@ -97,7 +97,28 @@ FROM action a
     LEFT JOIN DOWN ON (DOWN.action_id = a.id)
 );
 
+CREATE VIEW member_and_votes_view
+  (id, upvotes, downvotes)
+AS
+WITH UP AS
+    (SELECT member_id, COUNT(*) AS upvote_number
+    FROM upvote
+    GROUP BY member_id),
+DOWN AS
+    (SELECT member_id, COUNT(*) AS downvote_number
+    FROM downvote
+    GROUP BY member_id)
+(SELECT m.id, (CASE WHEN UP.upvote_number IS NULL THEN 0 ELSE UP.upvote_number END ), 
+   (CASE WHEN DOWN.downvote_number IS NULL THEN 0 ELSE DOWN.downvote_number END )
+FROM member m
+    LEFT JOIN UP ON(UP.member_id = m.id)
+    LEFT JOIN DOWN ON (DOWN.member_id = m.id)
+);
+
+
+
 CREATE USER app WITH ENCRYPTED PASSWORD 'qwerty';
-GRANT SELECT, INSERT, UPDATE ON TABLE authority, member, project, action, downvote, upvote, action_and_votes_view TO app;
+GRANT SELECT, INSERT, UPDATE ON TABLE authority, member, project, action, downvote, upvote, 
+    action_and_votes_view, member_and_votes_view TO app;
 CREATE EXTENSION pgcrypto;
 

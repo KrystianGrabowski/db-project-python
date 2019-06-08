@@ -193,7 +193,14 @@ class Database:
         self.data = self.cur.fetchall()
 
     def projects_function(self, args):
-        pass
+        self.check_correctness("actions", args)
+        if 'authority' in args:
+            self.cur.execute("SELECT * FROM project WHERE authority_id = %s ORDER BY id", (args['authority'], ))
+        else:
+            self.cur.execute("SELECT * FROM project ORDER BY id")
+        self.data = self.cur.fetchall()
+
+
     
     def votes_function(self, args):
         self.check_correctness("votes", args)
@@ -221,7 +228,7 @@ class Database:
             WITH UP AS
                 (SELECT u.member_id, COUNT(*) AS upvote_number
                 FROM upvote u
-                    JOIN pro a ON (a.id = u.action_id)
+                    JOIN action a ON (a.id = u.action_id)
                 WHERE project_id = %s
                 GROUP BY u.member_id),
             DOWN AS

@@ -7,4 +7,7 @@
 { "downvote": { "timestamp": 1557475704, "password": "abc", "member": 1, "action":600}}
 { "votes": { "timestamp": 1557475705, "password": "abc", "member": 1}}
 { "trolls": { "timestamp": 1557477055 }}
-{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "project": 1200}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc"}}
+{ "downvote": { "timestamp": 1557475702, "password": "asd", "member": 2, "action":700}}
+{ "votes": { "timestamp": 1557477055, "member": 1, "password": "abc", "project": 1200}}
+{ "projects": { "timestamp": 1557477055, "member": 1, "password": "abc", "authority": 10000}}
