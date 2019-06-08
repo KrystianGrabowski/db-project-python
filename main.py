@@ -178,17 +178,17 @@ class Database:
     def actions_function(self, args):
         self.check_correctness("actions", args)
         if 'type' in args and 'project' not in args and 'authority' not in args:
-            self.cur.execute("SELECT * FROM action_and_votes_view where action_type=%s", (args["type"], ))
+            self.cur.execute("SELECT * FROM action_and_votes_view where action_type=%s ORDER BY id;", (args["type"], ))
         elif 'type' in args and 'project' in args:
-            self.cur.execute("SELECT * FROM action_and_votes_view where action_type=%s AND project_id=%s ", (args["type"], args['project'] ))
+            self.cur.execute("SELECT * FROM action_and_votes_view where action_type=%s AND project_id=%s ORDER BY id;", (args["type"], args['project'] ))
         elif 'type' in args and 'authority' in args:
-            self.cur.execute("SELECT * FROM action_and_votes_view where action_type=%s AND authority_id=%s", (args["type"], args['authority'] ))
+            self.cur.execute("SELECT * FROM action_and_votes_view where action_type=%s AND authority_id=%s ORDER BY id;", (args["type"], args['authority'] ))
         elif 'project' in args :
-            self.cur.execute("SELECT * FROM action_and_votes_view where project_id=%s", (args["project"], ))
+            self.cur.execute("SELECT * FROM action_and_votes_view where project_id=%s ORDER BY id;", (args["project"], ))
         elif 'authority' in args:
-            self.cur.execute("SELECT * FROM action_and_votes_view where authority_id=%s", (args['authority'], ))
+            self.cur.execute("SELECT * FROM action_and_votes_view where authority_id=%s ORDER BY id;", (args['authority'], ))
         else:
-            self.cur.execute("SELECT * FROM action_and_votes_view")
+            self.cur.execute("SELECT * FROM action_and_votes_view ORDER BY id;")
 
         self.data = self.cur.fetchall()
 
