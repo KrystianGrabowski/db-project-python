@@ -33,13 +33,13 @@ class Database:
         f.close()
 
     def user_has_privileges(self, is_leader, function_name):
-        app_user_privileges = ["protest", "support", "downvote", "upvote"]
+        app_user_privileges = ["protest", "downvote", "upvote"]
         if not is_leader and function_name not in app_user_privileges:
             return False
         return True
 
     def check_user_privileges(self, is_leader, function_name):
-        if not user_has_privileges(is_leader, function_name):
+        if not self.user_has_privileges(is_leader, function_name):
             raise Exception('User has no privileges to perform action')
 
     def check_password(self, id, password):
@@ -53,14 +53,16 @@ class Database:
         return self.cur.fetchone()[0]
 
     def update_user_return_true_if_leader(self, id, password, last_activity):
-        user_tuple = get_member_by_id(id)
+        user_tuple = self.get_member_by_id(id)
         if user_tuple is not None:
-            self.update_user_timestamp(id, u )
+            self.update_user_timestamp(id, user_tuple[1], password, user_tuple[2], last_activity, user_tuple[4])
+            return user_tuple[3]
         else:
             self.insert_user(id, password, last_activity, 'false')
-        return user_has_privileges(user_tuple[], )
+            return False
+        
 
-    def update_user_timestamp(self, id, user_password, user_timestamp, current_timestamp, is_dead):
+    def update_user_timestamp(self, id, user_password, password, user_timestamp, current_timestamp, is_dead):
         if self.compare_passwords(password, user_password):
             if is_dead or self.dead_user(user_timestamp, current_timestamp):
                 self.cur.execute("UPDATE member SET dead='true' WHERE id=%s", (id,))
@@ -107,7 +109,7 @@ class Database:
 
     def open_function(self, args):
         self.connect_to_database(args['database'], args['login'], args['password'])
-        if self.__db_init: #and self.user_has_privileges('initialization'):
+        if self.__db_init and args['login'] == 'init':
                 self.database_initialization("db_init.sql")
 
     def leader_function(self, args):
@@ -127,7 +129,16 @@ class Database:
                             VALUES(%s, %s, %s );""", (args["action"], args["project"], args["member"]));
 
     def support_function(self, args):
-        pass
+        is_leader = self.update_user_return_true_if_leader(args['member'], args['password'], args['timestamp'])
+        self.check_user_privileges(is_leader, "support")    
+        if self.get_project_by_id(args["project"]) is None:
+            if "authority" in args:
+                self.insert_project(args["project"], args["authority"])
+            else:
+                raise KeyError('No project with given id, please enter the authority')
+
+        self.cur.execute("""INSERT INTO support(id, project_id, member_id) 
+                            VALUES(%s, %s, %s );""", (args["action"], args["project"], args["member"]));
     
     def upvote_function(self, args):
         pass
@@ -171,6 +182,7 @@ class Database:
                     print(e.message)
                 else:
                     print(e)
+            self.conn.rollback()
             error_occured = True
         print(self.status(error_occured, data))
 
