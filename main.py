@@ -3,6 +3,8 @@ import json
 from Crypto.Cipher import AES
 import argparse
 import sys
+import pprint
+
 
 class Database:
     def __init__(self, db_init, debug_mode):
@@ -71,7 +73,9 @@ class Database:
             self.cur.execute("UPDATE member SET last_activity=to_timestamp(%s) WHERE id=%s;", (current_timestamp, id))
         else:
             raise Exception('Wrong password')
-        
+
+    def update_dead_status(self, current_timestamp):
+        self.cur.execute("UPDATE member SET dead='true' WHERE last_activity + interval '1 year' >  to_timestamp(%s);", (current_timestamp, ))      
 
     def dead_user(self, user_timestamp, current_timestamp):
         self.cur.execute("SELECT to_timestamp(%s) >  %s + interval '1 year';", (current_timestamp, user_timestamp))
@@ -157,7 +161,6 @@ class Database:
 
     def upvote_function(self, args):
         self.check_correctness("upvote", args)
-        print(self.user_can_vote_for_action(args['member'], args['action']))
         if self.user_can_vote_for_action(args['member'], args['action']):
             self.cur.execute("""INSERT INTO upvote(member_id, action_id) 
                                 VALUES(%s, %s );""", (args['member'], args['action']))
@@ -166,7 +169,6 @@ class Database:
 
     def downvote_function(self, args):
         self.check_correctness("downvote", args)
-        print(self.user_can_vote_for_action(args['member'], args['action']))
         if self.user_can_vote_for_action(args['member'], args['action']):
             self.cur.execute("""INSERT INTO downvote(member_id, action_id) 
                                 VALUES(%s, %s );""", (args["member"], args["action"]))
@@ -183,12 +185,20 @@ class Database:
         pass
 
     def trolls_function(self, args):
-        pass
+        self.update_dead_status(args['timestamp'])
+        self.cur.execute("""SELECT id, upvotes, downvotes, dead
+                            FROM member
+                            WHERE downvotes-upvotes > 0
+                            ORDER BY downvotes-upvotes;""")
+        self.data = self.cur.fetchall()
+        
+
+        
 
     # funkcje API _END_
 
     def function_interpreter(self, name, args):
-        data = None
+        self.data = None
         error_occured = False
         try:
             (lambda function_name : {
@@ -211,7 +221,7 @@ class Database:
                     print(e)
             self.conn.rollback()
             error_occured = True
-        print(self.status(error_occured, data))
+        print(self.status(error_occured, self.data))
 
     
     def start_stream(self):
@@ -238,9 +248,10 @@ class Database:
             if data is None:
                 return json.dumps({'status': 'OK'})
             else:
-                return json.dumps({'status': 'OK', 'data': data})
-
-
+                data2 = []
+                for i in data:
+                    data2.append(str(i))
+                return json.dumps({'status': 'OK', 'data' :data2 }, indent=4)
 
 def main():
     parser = argparse.ArgumentParser(description='Projekt: System Zarządzania Partią Polityczną')
