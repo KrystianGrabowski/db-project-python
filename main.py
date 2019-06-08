@@ -6,20 +6,8 @@ import sys
 
 class Database:
     def __init__(self, db_init, debug_mode):
-        self.__privilege_level = 0
         self.__db_init = db_init
         self.__debug_mode = debug_mode
-
-    @property
-    def privilege_level(self):
-        return self.__privilege_level
-    
-    @privilege_level.setter
-    def privilege_level(self, level):
-        if 0 <= level <= 2:
-            self.__privilege_level = level
-        else:
-            self.__privilege_level = 0
 
     def connect_to_database(self, database_name, user_name, password):
         self.conn = psycopg2.connect(dbname=database_name, user=user_name, password=password, host="localhost")
@@ -44,17 +32,15 @@ class Database:
             self.interpret_string_as_json(line)
         f.close()
 
-    def user_has_privileges(self, function_name):
-        app_user_privileges = []
-        print(self.privilege_level)
-        if self.privilege_level == 0:
-            if function_name in app_user_privileges:
-                return True
+    def user_has_privileges(self, is_leader, function_name):
+        app_user_privileges = ["protest", "support", "downvote", "upvote"]
+        if not is_leader and function_name not in app_user_privileges:
             return False
         return True
-    
-    def user_set_privilege_level(self, name):
-        self.privilege_level = 1 if name == 'testuser' else 0
+
+    def check_user_privileges(self, is_leader, function_name):
+        if not user_has_privileges(is_leader, function_name):
+            raise Exception('User has no privileges to perform action')
 
     def check_password(self, id, password):
         user_tuple = self.get_member_by_id(id)
@@ -66,34 +52,37 @@ class Database:
         self.cur.execute("SELECT crypt(%s, %s) = %s;", (password, db_password, db_password))
         return self.cur.fetchone()[0]
 
-    def update_user_timestamp(self, id, password, last_activity):
-        self.cur.execute("SELECT * FROM member WHERE id=%s;", (id,))
-        user_tuple = self.cur.fetchone()
+    def update_user_return_true_if_leader(self, id, password, last_activity):
+        user_tuple = get_member_by_id(id)
         if user_tuple is not None:
-            if self.compare_passwords(password, user_tuple[1]):
-                if user_tuple[4] or self.dead_user(user_tuple[2], last_activity):
-                    self.cur.execute("UPDATE member SET dead='true' WHERE id=%s", (id,))
-                    self.conn.commit()
-                    raise Exception('User is dead')
-                self.cur.execute("UPDATE member SET last_activity=to_timestamp(%s) WHERE id=%s;", (last_activity, id))
-            else:
-                raise Exception('Wrong password')
+            self.update_user_timestamp(id, u )
         else:
             self.insert_user(id, password, last_activity, 'false')
+        return user_has_privileges(user_tuple[], )
+
+    def update_user_timestamp(self, id, user_password, user_timestamp, current_timestamp, is_dead):
+        if self.compare_passwords(password, user_password):
+            if is_dead or self.dead_user(user_timestamp, current_timestamp):
+                self.cur.execute("UPDATE member SET dead='true' WHERE id=%s", (id,))
+                self.conn.commit()
+                raise Exception('User is dead')
+            self.cur.execute("UPDATE member SET last_activity=to_timestamp(%s) WHERE id=%s;", (current_timestamp, id))
+        else:
+            raise Exception('Wrong password')
+        
 
     def dead_user(self, user_timestamp, current_timestamp):
-        print("deed")
         self.cur.execute("SELECT to_timestamp(%s) >  %s + interval '1 year';", (current_timestamp, user_timestamp))
         return self.cur.fetchone()[0]
 
     # SELECT _START_
 
     def get_member_by_id(self, id):
-        self.cur.execute("SELECT * FROM member x WHERE x.id=%s;", (id,))
+        self.cur.execute("SELECT * FROM member WHERE id=%s;", (id,))
         return self.cur.fetchone()
 
     def get_project_by_id(self, id):
-        self.cur.execute("SELECT * FROM project p WHERE p.id=%s;", (id,))
+        self.cur.execute("SELECT * FROM project WHERE id=%s;", (id,))
         return self.cur.fetchone()
     
     # SELECT _END_
@@ -118,16 +107,16 @@ class Database:
 
     def open_function(self, args):
         self.connect_to_database(args['database'], args['login'], args['password'])
-        self.user_set_privilege_level(args['login'])
-        if self.__db_init and self.user_has_privileges('initialization'):
-            self.database_initialization("db_init.sql")
+        if self.__db_init: #and self.user_has_privileges('initialization'):
+                self.database_initialization("db_init.sql")
 
     def leader_function(self, args):
         self.insert_user(args['member'], str(args['password']), args['timestamp'], 'true')
     
     #TO DO
     def protest_function(self, args):
-        self.update_user_timestamp(args['member'], args['password'], args['timestamp'])
+        is_leader = self.update_user_return_true_if_leader(args['member'], args['password'], args['timestamp'])
+        self.check_user_privileges(is_leader, "protest")    
         if self.get_project_by_id(args["project"]) is None:
             if "authority" in args:
                 self.insert_project(args["project"], args["authority"])
