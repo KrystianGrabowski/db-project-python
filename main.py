@@ -75,7 +75,7 @@ class Database:
             raise Exception('Wrong password')
 
     def update_dead_status(self, current_timestamp):
-        self.cur.execute("UPDATE member SET dead='true' WHERE last_activity + interval '1 year' >  to_timestamp(%s);", (current_timestamp, ))      
+        self.cur.execute("UPDATE member SET dead='true' WHERE last_activity + interval '1 year' <  to_timestamp(%s);", (current_timestamp, ))      
 
     def dead_user(self, user_timestamp, current_timestamp):
         self.cur.execute("SELECT to_timestamp(%s) >  %s + interval '1 year';", (current_timestamp, user_timestamp))
@@ -176,7 +176,21 @@ class Database:
             raise Exception('User has already voted')
 
     def actions_function(self, args):
-        pass
+        self.check_correctness("actions", args)
+        if 'type' in args and 'project' not in args and 'authority' not in args:
+            self.cur.execute("SELECT * FROM action_and_votes_view where action_type=%s", (args["type"], ))
+        elif 'type' in args and 'project' in args:
+            self.cur.execute("SELECT * FROM action_and_votes_view where action_type=%s AND project_id=%s ", (args["type"], args['project'] ))
+        elif 'type' in args and 'authority' in args:
+            self.cur.execute("SELECT * FROM action_and_votes_view where action_type=%s AND authority_id=%s", (args["type"], args['authority'] ))
+        elif 'project' in args :
+            self.cur.execute("SELECT * FROM action_and_votes_view where project_id=%s", (args["project"], ))
+        elif 'authority' in args:
+            self.cur.execute("SELECT * FROM action_and_votes_view where authority_id=%s", (args['authority'], ))
+        else:
+            self.cur.execute("SELECT * FROM action_and_votes_view")
+
+        self.data = self.cur.fetchall()
 
     def projects_function(self, args):
         pass
