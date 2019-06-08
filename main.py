@@ -71,11 +71,20 @@ class Database:
         user_tuple = self.cur.fetchone()
         if user_tuple is not None:
             if self.compare_passwords(password, user_tuple[1]):
-                self.cur.execute("UPDATE member SET last_activity=to_timestamp(%s) where id=%s;", (last_activity, id))
+                if user_tuple[4] or self.dead_user(user_tuple[2], last_activity):
+                    self.cur.execute("UPDATE member SET dead='true' WHERE id=%s", (id,))
+                    self.conn.commit()
+                    raise Exception('User is dead')
+                self.cur.execute("UPDATE member SET last_activity=to_timestamp(%s) WHERE id=%s;", (last_activity, id))
             else:
                 raise Exception('Wrong password')
         else:
             self.insert_user(id, password, last_activity, 'false')
+
+    def dead_user(self, user_timestamp, current_timestamp):
+        print("deed")
+        self.cur.execute("SELECT to_timestamp(%s) >  %s + interval '1 year';", (current_timestamp, user_timestamp))
+        return self.cur.fetchone()[0]
 
     # SELECT _START_
 
