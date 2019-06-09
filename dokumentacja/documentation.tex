@@ -1,0 +1,62 @@
+\documentclass[a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper, left=2.5cm, right=2.5cm, top=2cm, bottom=1cm]{geometry}
+\usepackage{polski}
+\usepackage[polish]{babel}
+\usepackage{indentfirst}
+
+
+
+\title{Projekt: System Zarządzania Partią Polityczną}
+\author{Krystian Grabowski} 
+\begin{document}
+\maketitle
+\section{Opis}
+Program został napisany w języku Python v3.6.7. Składa się z plików
+\begin{itemize}
+    \itemsep0em
+    \item[-] \textbf{main.py} \\ zawiera wszystkie funkcje interpretujące dane i zarządzające bazą
+    \item[-] \textbf{db\_init.sql} \\ zawiera polecenia tworzące niezbędne elementy bazy, triggery oraz funkcje
+\end{itemize}
+  
+
+\section{Uruchomienie}
+\subsection{Argumenty wywołania}
+\begin{itemize}
+    \itemsep0em
+    \item[] \textbf{-h, --help} \\ pomoc
+    \item[] \textbf{-i, --init} \\  inicjalizacja bazy danych
+    \item[] \textbf{-g, --debug} \\  aktywuje tryb debugownia, 
+        informacje o błędach będą wyświetlane
+    \item[] \textbf{-f FILENAME, --filename FILENAME} \\ wczytuje plik FILENAME 
+    oraz interpretuje obiekty JSON w nim zawarte
+\end{itemize}
+Jeżeli nie podano flagi -f program po uruchomieniu zacznie wczytywać dane ze standardowego wejścia.
+\subsection{Pierwsze uruchomienie}
+Podczas pierwszego uruchomienia należy dodać flagę --init. Dzięki niej zostanią 
+utworzone wszystkie niezbędne elementy w bazie danych.
+
+\begin{itemize}
+    \itemsep0em
+    \item[-] \textbf{python3 main.py --init} \\ 
+        Rozpoczyna inicjalizację bazy danych czytając ze strumienia wejściowego.
+    \item[-] \textbf{python3 main.py --init -f FILENAME} \\  
+        Rozpoczyna inicjalizację bazy czytając z pliku o nazwie FILENAME
+    \item[-] \textbf{python3 main.py --init $<$ FILENAME} \\  
+        Przekazuje na standardowe wejście dane z pliku FILENAME oraz inicjalizuje bazę danych
+     
+\end{itemize}
+
+\subsection{Kolejne uruchomienia}
+\begin{itemize}
+    \itemsep0em
+    \item[-] \textbf{python3 main.py} \\ 
+        Rozpoczyna odczyt ze strumienia wejściowego.
+    \item[-] \textbf{python3 main.py -f FILENAME} \\  
+        Rozpoczyna odczyt z pliku o nazwie FILENAME
+    \item [-] \textbf{python3 main.py $<$ FILENAME} \\
+        Przekazuje na standardowe wejście dane z pliku FILENAME
+
+\end{itemize}
+
+\end{document}
