@@ -176,7 +176,6 @@ BEGIN
 END; $X$ 
 LANGUAGE 'plpgsql';
 
-
 CREATE OR REPLACE FUNCTION index_exists (INT) 
    RETURNS boolean
 AS $X$
@@ -189,6 +188,62 @@ BEGIN
         UNION
         (SELECT id FROM project)
         UNION
+        (SELECT id FROM action)
+    LOOP 
+        IF (id_num = $1) THEN RETURN TRUE; END IF;
+    END LOOP;
+    RETURN FALSE;
+END; $X$ 
+LANGUAGE 'plpgsql';
+
+CREATE OR REPLACE FUNCTION member_exists (INT) 
+   RETURNS boolean
+AS $X$
+DECLARE id_num int4;
+BEGIN
+    FOR id_num IN
+        (SELECT id FROM member)
+    LOOP 
+        IF (id_num = $1) THEN RETURN TRUE; END IF;
+    END LOOP;
+    RETURN FALSE;
+END; $X$ 
+LANGUAGE 'plpgsql';
+
+CREATE OR REPLACE FUNCTION authority_exists (INT) 
+   RETURNS boolean
+AS $X$
+DECLARE id_num int4;
+BEGIN
+    FOR id_num IN
+        (SELECT id FROM authority)
+    LOOP 
+        IF (id_num = $1) THEN RETURN TRUE; END IF;
+    END LOOP;
+    RETURN FALSE;
+END; $X$ 
+LANGUAGE 'plpgsql';
+
+CREATE OR REPLACE FUNCTION project_exists (INT) 
+   RETURNS boolean
+AS $X$
+DECLARE id_num int4;
+BEGIN
+    FOR id_num IN
+        (SELECT id FROM project)
+    LOOP 
+        IF (id_num = $1) THEN RETURN TRUE; END IF;
+    END LOOP;
+    RETURN FALSE;
+END; $X$ 
+LANGUAGE 'plpgsql';
+
+CREATE OR REPLACE FUNCTION action_exists (INT) 
+   RETURNS boolean
+AS $X$
+DECLARE id_num int4;
+BEGIN
+    FOR id_num IN
         (SELECT id FROM action)
     LOOP 
         IF (id_num = $1) THEN RETURN TRUE; END IF;

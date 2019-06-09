@@ -97,8 +97,29 @@ class Database:
 
     def id_exists(self, id):
         self.cur.execute("SELECT index_exists(%s);", (id, ))
-        if not self.cur.fetchone():
+        if self.cur.fetchone()[0]:
             raise Exception("ID already exists")
+
+    def id_exists_in_column(self, id_dict):
+        if 'authority' in id_dict:
+            self.cur.execute("SELECT authority_exists(%s);", (id_dict['authority'], ))
+            if not self.cur.fetchone()[0]:
+                raise Exception("ID does not exist")
+
+        if 'member' in id_dict:
+            self.cur.execute("SELECT member_exists(%s);", (id_dict['member'], ))
+            if not self.cur.fetchone()[0]:
+                raise Exception("ID does not exist")
+
+        if 'project' in id_dict:
+            self.cur.execute("SELECT project_exists(%s);", (id_dict['project'], ))
+            if not self.cur.fetchone()[0]:
+                raise Exception("ID does not exist")
+
+        if 'action' in id_dict:
+            self.cur.execute("SELECT action_exists(%s);", (id_dict['action'], ))
+            if not self.cur.fetchone()[0]:
+                raise Exception("ID does not exist")
 
     def insert_user(self, id, password, last_activity, leader):
         self.id_exists(id)
@@ -109,6 +130,7 @@ class Database:
         self.id_exists(id)
         self.cur.execute("SELECT * FROM authority a WHERE a.id = %s;", (authority_id,))
         if self.cur.fetchone() is None:
+            self.id_exists(authority_id)
             self.cur.execute("INSERT INTO authority VALUES(%s);", (authority_id,))
 
         self.cur.execute("""INSERT INTO project(id, authority_id) 
@@ -163,6 +185,7 @@ class Database:
         return True
 
     def upvote_function(self, args):
+        self.id_exists_in_column({'action': args['action']})
         self.check_correctness("upvote", args)
         if self.user_can_vote_for_action(args['member'], args['action']):
             self.cur.execute("""INSERT INTO upvote(member_id, action_id) 
@@ -171,6 +194,7 @@ class Database:
             raise Exception('User has already voted')
 
     def downvote_function(self, args):
+        self.id_exists_in_column({'action': args['action']})
         self.check_correctness("downvote", args)
         if self.user_can_vote_for_action(args['member'], args['action']):
             self.cur.execute("""INSERT INTO downvote(member_id, action_id) 
@@ -180,6 +204,16 @@ class Database:
 
     def actions_function(self, args):
         self.check_correctness("actions", args)
+        if 'type' in args:
+            if args['type'] != 'support' and args['type'] != 'protest':
+                raise Exception("Unknown action type")
+
+        if 'project' in args:
+            self.id_exists_in_column({'project': args['project']})
+        
+        if 'authority' in args:
+            self.id_exists_in_column({'authority': args['authority']})
+
         if 'type' in args and 'project' not in args and 'authority' not in args:
             self.cur.execute("SELECT * FROM action_and_votes_view where action_type=%s ORDER BY id;", (args["type"], ))
         elif 'type' in args and 'project' in args:
@@ -196,6 +230,8 @@ class Database:
         self.data = self.cur.fetchall()
 
     def projects_function(self, args):
+        if 'authority' in args:
+            self.id_exists_in_column({'authority': args['authority']})
         self.check_correctness("actions", args)
         if 'authority' in args:
             self.cur.execute("SELECT * FROM project WHERE authority_id = %s ORDER BY id", (args['authority'], ))
@@ -206,6 +242,11 @@ class Database:
 
     
     def votes_function(self, args):
+        if 'action' in args:
+            self.id_exists_in_column({'action': args['action']})
+        if 'project' in args:
+            self.id_exists_in_column({'project': args['project']})
+
         self.check_correctness("votes", args)
         if 'action' in args:
             print("SUUC")
