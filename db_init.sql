@@ -116,6 +116,66 @@ FROM member m
 );
 
 
+CREATE OR REPLACE FUNCTION member_and_votes_action (INT) 
+   RETURNS TABLE (
+    id int4, 
+    upvotes bigint,
+    downvotes bigint
+) 
+AS $X$
+BEGIN
+   RETURN QUERY 
+    (WITH UP AS
+        (SELECT member_id, COUNT(*) AS upvote_number
+        FROM upvote
+        WHERE action_id = $1
+        GROUP BY member_id),
+    DOWN AS
+        (SELECT member_id, COUNT(*) AS downvote_number
+        FROM downvote
+        WHERE action_id = $1
+        GROUP BY member_id)
+    (SELECT m.id, (CASE WHEN UP.upvote_number IS NULL THEN 0 ELSE UP.upvote_number END ), 
+    (CASE WHEN DOWN.downvote_number IS NULL THEN 0 ELSE DOWN.downvote_number END )
+    FROM member m
+        LEFT JOIN UP ON(UP.member_id = m.id)
+        LEFT JOIN DOWN ON (DOWN.member_id = m.id)
+    )
+    ORDER BY m.id);
+END; $X$ 
+LANGUAGE 'plpgsql';
+
+CREATE OR REPLACE FUNCTION member_and_votes_project (INT) 
+   RETURNS TABLE (
+    id int4, 
+    upvotes bigint,
+    downvotes bigint
+) 
+AS $X$
+BEGIN
+    RETURN QUERY 
+        (WITH UP AS
+            (SELECT u.member_id, COUNT(*) AS upvote_number
+            FROM upvote u
+                JOIN action a ON (a.id = u.action_id)
+            WHERE project_id = $1
+            GROUP BY u.member_id),
+        DOWN AS
+            (SELECT d.member_id, COUNT(*) AS downvote_number
+            FROM downvote d
+                JOIN action a ON (a.id = d.action_id)
+            WHERE project_id = $1
+            GROUP BY d.member_id)
+        (SELECT m.id, (CASE WHEN UP.upvote_number IS NULL THEN 0 ELSE UP.upvote_number END ), 
+        (CASE WHEN DOWN.downvote_number IS NULL THEN 0 ELSE DOWN.downvote_number END )
+        FROM member m
+            LEFT JOIN UP ON(UP.member_id = m.id)
+            LEFT JOIN DOWN ON (DOWN.member_id = m.id)
+        )
+        ORDER BY m.id);
+END; $X$ 
+LANGUAGE 'plpgsql';
+
 
 CREATE USER app WITH ENCRYPTED PASSWORD 'qwerty';
 GRANT SELECT, INSERT, UPDATE ON TABLE authority, member, project, action, downvote, upvote, 
