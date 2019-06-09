@@ -104,22 +104,53 @@ class Database:
         if 'authority' in id_dict:
             self.cur.execute("SELECT authority_exists(%s);", (id_dict['authority'], ))
             if not self.cur.fetchone()[0]:
-                raise Exception("ID does not exist")
+                raise Exception("ID(authority) does not exist")
 
         if 'member' in id_dict:
             self.cur.execute("SELECT member_exists(%s);", (id_dict['member'], ))
             if not self.cur.fetchone()[0]:
-                raise Exception("ID does not exist")
+                raise Exception("ID(member) does not exist")
 
         if 'project' in id_dict:
             self.cur.execute("SELECT project_exists(%s);", (id_dict['project'], ))
             if not self.cur.fetchone()[0]:
-                raise Exception("ID does not exist")
+                raise Exception("ID(project) does not exist")
 
         if 'action' in id_dict:
             self.cur.execute("SELECT action_exists(%s);", (id_dict['action'], ))
             if not self.cur.fetchone()[0]:
-                raise Exception("ID does not exist")
+                raise Exception("ID(action) does not exist")
+
+    def fields_have_different_id(self, name, args):
+        if name == "protest" or name == "support":
+            id_arr = [args["member"], args["action"], args["project"]]
+            if 'authority' in args:
+                id_arr.append(args['authority'])
+
+        elif name == "upvote" or name == "downvote":
+            id_arr = [args["member"], args["action"]]
+
+        elif name == "actions":
+            id_arr = [args["member"]]
+            if 'project' in args:
+                id_arr.append(args["project"])
+            if 'authority' in args:
+                id_arr.append(args["authority"])
+        
+        elif name == "projects":
+            id_arr = [args["member"]]
+            if 'authority' in args:
+                id_arr.append(args["authority"])
+
+        elif name == "votes":
+            id_arr = [args["member"]]
+            if 'project' in args:
+                id_arr.append(args["project"])
+            if 'action' in args:
+                id_arr.append(args["action"])
+
+        if len(id_arr) != len(set(id_arr)):
+            raise Exception("Two or more fields have the same value")
 
     def insert_user(self, id, password, last_activity, leader):
         self.id_exists(id)
@@ -161,6 +192,7 @@ class Database:
                 raise KeyError('No project with given id, please enter the authority')        
 
     def protest_function(self, args):
+        self.fields_have_different_id("protest", args)
         self.id_exists(args["action"])
         self.check_correctness("protest", args)
         self.check_project_existence(args)
@@ -168,6 +200,7 @@ class Database:
                             VALUES(%s, %s, %s, %s);""", (args["action"], args["project"], args["member"], 'false'));
 
     def support_function(self, args):
+        self.fields_have_different_id("support", args)
         self.id_exists(args["action"])
         self.check_correctness("support", args)
         self.check_project_existence(args)
@@ -185,6 +218,7 @@ class Database:
         return True
 
     def upvote_function(self, args):
+        self.fields_have_different_id("upvote", args)
         self.id_exists_in_column({'action': args['action']})
         self.check_correctness("upvote", args)
         if self.user_can_vote_for_action(args['member'], args['action']):
@@ -194,6 +228,7 @@ class Database:
             raise Exception('User has already voted')
 
     def downvote_function(self, args):
+        self.fields_have_different_id("downvote", args)
         self.id_exists_in_column({'action': args['action']})
         self.check_correctness("downvote", args)
         if self.user_can_vote_for_action(args['member'], args['action']):
@@ -203,6 +238,9 @@ class Database:
             raise Exception('User has already voted')
 
     def actions_function(self, args):
+        self.fields_have_different_id("actions", args)
+        id_arr = [args["member"], args["action"]]
+        self.fields_have_different_id(id_arr)
         self.check_correctness("actions", args)
         if 'type' in args:
             if args['type'] != 'support' and args['type'] != 'protest':
@@ -230,6 +268,7 @@ class Database:
         self.data = self.cur.fetchall()
 
     def projects_function(self, args):
+        self.fields_have_different_id("projects", args)
         if 'authority' in args:
             self.id_exists_in_column({'authority': args['authority']})
         self.check_correctness("actions", args)
@@ -242,6 +281,7 @@ class Database:
 
     
     def votes_function(self, args):
+        self.fields_have_different_id("votes", args)
         if 'action' in args:
             self.id_exists_in_column({'action': args['action']})
         if 'project' in args:
@@ -340,8 +380,6 @@ def main():
 
     db.cur.close()
     db.conn.close()
-
-    print("END")
 
 
 if __name__ == "__main__":
