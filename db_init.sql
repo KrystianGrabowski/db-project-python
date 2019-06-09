@@ -177,8 +177,27 @@ END; $X$
 LANGUAGE 'plpgsql';
 
 
+CREATE OR REPLACE FUNCTION index_exists (INT) 
+   RETURNS boolean
+AS $X$
+DECLARE id_num int4;
+BEGIN
+    FOR id_num IN
+        (SELECT id FROM authority)
+        UNION
+        (SELECT id FROM member)
+        UNION
+        (SELECT id FROM project)
+        UNION
+        (SELECT id FROM action)
+    LOOP 
+        IF (id_num = $1) THEN RETURN TRUE; END IF;
+    END LOOP;
+    RETURN FALSE;
+END; $X$ 
+LANGUAGE 'plpgsql';
+
 CREATE USER app WITH ENCRYPTED PASSWORD 'qwerty';
 GRANT SELECT, INSERT, UPDATE ON TABLE authority, member, project, action, downvote, upvote, 
     action_and_votes_view, member_and_votes_view TO app;
 CREATE EXTENSION pgcrypto;
-

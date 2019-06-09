@@ -95,11 +95,18 @@ class Database:
 
     # INSERT _START_
 
+    def id_exists(self, id):
+        self.cur.execute("SELECT index_exists(%s);", (id, ))
+        if not self.cur.fetchone():
+            raise Exception("ID already exists")
+
     def insert_user(self, id, password, last_activity, leader):
+        self.id_exists(id)
         self.cur.execute("""INSERT INTO member(id, password, last_activity, leader) 
                             VALUES(%s, crypt(%s, gen_salt('md5')), to_timestamp(%s), %s );""", (id, password, last_activity, leader));
 
     def insert_project(self, id, authority_id):
+        self.id_exists(id)
         self.cur.execute("SELECT * FROM authority a WHERE a.id = %s;", (authority_id,))
         if self.cur.fetchone() is None:
             self.cur.execute("INSERT INTO authority VALUES(%s);", (authority_id,))
@@ -130,20 +137,16 @@ class Database:
                 self.insert_project(args["project"], args["authority"])
             else:
                 raise KeyError('No project with given id, please enter the authority')        
-     
-    def action_function(self, args):
-        self.check_correctness("protest", args)
-        self.check_project_existence(args)
-        self.cur.execute("""INSERT INTO action(id, project_id, member_id, action_type) 
-                            VALUES(%s, %s, %s %s);""", (args["action"], args["project"], args["member"]));
 
     def protest_function(self, args):
+        self.id_exists(args["action"])
         self.check_correctness("protest", args)
         self.check_project_existence(args)
         self.cur.execute("""INSERT INTO action(id, project_id, member_id, action_type) 
                             VALUES(%s, %s, %s, %s);""", (args["action"], args["project"], args["member"], 'false'));
 
     def support_function(self, args):
+        self.id_exists(args["action"])
         self.check_correctness("support", args)
         self.check_project_existence(args)
         self.cur.execute("""INSERT INTO action(id, project_id, member_id, action_type) 
