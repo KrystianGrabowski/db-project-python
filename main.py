@@ -205,45 +205,10 @@ class Database:
     def votes_function(self, args):
         self.check_correctness("votes", args)
         if 'action' in args:
-            self.cur.execute("""
-            WITH UP AS
-                (SELECT member_id, COUNT(*) AS upvote_number
-                FROM upvote
-                WHERE action_id = 500
-                GROUP BY member_id),
-            DOWN AS
-                (SELECT member_id, COUNT(*) AS downvote_number
-                FROM downvote
-                WHERE action_id = 500
-                GROUP BY member_id)
-            (SELECT m.id, (CASE WHEN UP.upvote_number IS NULL THEN 0 ELSE UP.upvote_number END ), 
-            (CASE WHEN DOWN.downvote_number IS NULL THEN 0 ELSE DOWN.downvote_number END )
-            FROM member m
-                LEFT JOIN UP ON(UP.member_id = m.id)
-                LEFT JOIN DOWN ON (DOWN.member_id = m.id)
-            )
-            ORDER BY m.id;""", (args["action"], args["action"]))
+            print("SUUC")
+            self.cur.execute("SELECT * FROM member_and_votes_action(%s)", (args["action"], ))
         elif 'project' in args:
-            self.cur.execute("""
-            WITH UP AS
-                (SELECT u.member_id, COUNT(*) AS upvote_number
-                FROM upvote u
-                    JOIN action a ON (a.id = u.action_id)
-                WHERE project_id = %s
-                GROUP BY u.member_id),
-            DOWN AS
-                (SELECT d.member_id, COUNT(*) AS downvote_number
-                FROM downvote d
-                    JOIN action a ON (a.id = d.action_id)
-                WHERE project_id = %s
-                GROUP BY d.member_id)
-            (SELECT m.id, (CASE WHEN UP.upvote_number IS NULL THEN 0 ELSE UP.upvote_number END ), 
-            (CASE WHEN DOWN.downvote_number IS NULL THEN 0 ELSE DOWN.downvote_number END )
-            FROM member m
-                LEFT JOIN UP ON(UP.member_id = m.id)
-                LEFT JOIN DOWN ON (DOWN.member_id = m.id)
-            )
-            ORDER BY m.id""", (args['project'], args['project']))
+            self.cur.execute("SELECT * FROM member_and_votes_project(%s)", (args['project'], ))
         else:
             self.cur.execute("SELECT * FROM member_and_votes_view")
         self.data = self.cur.fetchall()
