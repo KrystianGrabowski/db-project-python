@@ -1,0 +1,4 @@
+test-przykładowy-init
+test-przykładowy
+test-1-init
+test-1
