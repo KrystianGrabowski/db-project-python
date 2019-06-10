@@ -113,6 +113,7 @@ DOWN AS
 FROM member m
     LEFT JOIN UP ON(UP.member_id = m.id)
     LEFT JOIN DOWN ON (DOWN.member_id = m.id)
+ORDER BY m.id
 );
 
 

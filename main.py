@@ -483,8 +483,6 @@ class Database:
             <action> <type> <project> <authority> <upvotes> <downvotes>
         """
         self.fields_have_different_id("actions", args)
-        id_arr = [args["member"], args["action"]]
-        self.fields_have_different_id(id_arr)
         self.check_correctness("actions", args)
         if 'type' in args:
             if args['type'] != 'support' and args['type'] != 'protest':
@@ -614,13 +612,13 @@ class Database:
                 "votes" : lambda args : self.votes_function(args),
                 "trolls" : lambda args : self.trolls_function(args)}[function_name]
             )(name)(args)
+            
         except Exception as e:
             if self.__debug_mode:
                 if hasattr(e, 'message'):
                     print(e.message)
                 else:
                     print(e)
-            self.conn.rollback()
             error_occured = True
         print(self.status(error_occured, self.data))
 
@@ -650,11 +648,13 @@ class Database:
         Return:
             Obiekt JSON
         """
-        if not error_occured:
-            try:
+        try:
+            if not error_occured:
                 self.conn.commit()
-            except Exception as e:
-                error_occured = True
+            else:
+                self.conn.rollback()
+        except Exception as e:
+            error_occured = True
 
         if error_occured:
             return json.dumps({'status': 'ERROR'})

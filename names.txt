@@ -1,4 +1,14 @@
 test-przykładowy-init
 test-przykładowy
+test-open-init
 test-1-init
 test-1
+test-leader-init
+test-protest1-init
+test-protest1
+test-protest1-init
+test-support1
+test-updown-init
+test-updown
+test-privileges-init
+test-privileges
