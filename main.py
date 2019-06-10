@@ -579,7 +579,8 @@ class Database:
             <member> <upvotes> <downvotes> <active>
         """
         self.update_dead_status(args['timestamp'])
-        self.cur.execute("""SELECT id, upvotes, downvotes, dead
+        self.cur.execute("""SELECT id, upvotes, downvotes, 
+                                (CASE WHEN dead = FALSE THEN 'true' ELSE 'false' END)
                             FROM member
                             WHERE downvotes-upvotes > 0
                             ORDER BY downvotes-upvotes;""")
@@ -661,10 +662,7 @@ class Database:
             if data is None:
                 return json.dumps({'status': 'OK'})
             else:
-                data2 = []
-                for i in data:
-                    data2.append(str(i))
-                return json.dumps({'status': 'OK', 'data' :data2 }, indent=4)
+                return json.dumps({'status': 'OK', 'data' :data })
 
 def main():
     parser = argparse.ArgumentParser(description='Projekt: System Zarzadzania Partia Polityczna')
