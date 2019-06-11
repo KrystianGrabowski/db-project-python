@@ -22,3 +22,5 @@ test-privileges-init
 test-votes
 test-privileges-init
 test-trolls
+test-privileges-init
+test-lvp-privileges

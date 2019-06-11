@@ -490,6 +490,7 @@ class Database:
         SQL:
             <action> <type> <project> <authority> <upvotes> <downvotes>
         """
+        self.id_exists_in_column({'member': args['member']})
         self.fields_have_different_id("actions", args)
         self.check_correctness("actions", args)
         if 'type' in args:
@@ -530,6 +531,7 @@ class Database:
         SQL:
             <project> <authority>
         """
+        self.id_exists_in_column({'member': args['member']})
         self.fields_have_different_id("projects", args)
         if 'authority' in args:
             self.id_exists_in_column({'authority': args['authority']})
@@ -557,6 +559,7 @@ class Database:
             <member> <upvotes> <downvotes>
         """
         self.fields_have_different_id("votes", args)
+        self.id_exists_in_column({'member': args['member']})
         if 'action' in args:
             self.id_exists_in_column({'action': args['action']})
         if 'project' in args:

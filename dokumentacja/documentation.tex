@@ -68,5 +68,52 @@ utworzone wszystkie niezbędne elementy w bazie danych.
         Przekazuje na standardowe wejście dane z pliku FILENAME
 
 \end{itemize}
+\section{Opis SQL}
+\begin{itemize}
+    \itemsep0em
+    \item[] \textbf{Triggery:}
+    \begin{itemize} 
+        \item[] \textbf{update\_member\_upvotes} \\ 
+        Wywoływany przy wstawianiu do tabeli upvote zmienia ilość upvotes dla akcji usera
+        \item[] \textbf{update\_member\_downvotes} \\ 
+        Wywoływany przy wstawianiu do tabeli downvote zmienia ilość downvotes dla akcji usera 
+    \end{itemize}
+
+    \item[] \textbf{Widoki:}
+    \begin{itemize} 
+        \item[] \textbf{action\_and\_votes\_view} \\ 
+        Zwraca (id, action\_type, project\_id, authority\_id, upvotes, downvotes) gdzie id to identyfikator akcji. \\
+        Łączy akcje z projektami po id projektu, zlicza up i downvotes po id akcji a następnie łączy je z \\ 
+        projektem oraz akcją.
+        \item[] \textbf{member\_and\_votes\_view} \\ 
+        Zwraca (id, upvotes, downvotes) gdzie id to identyfikator użytkownika. Łączy użytkowników (LEFT JOIN) \\
+        z ilością głosów z up i downvotes sumowaną po id membera.
+    \end{itemize}
+ 
+    \item[] \textbf{Funkcje:}
+    \begin{itemize} 
+        \item[] \textbf{member\_and\_votes\_action} \\ 
+        Zwraca tabelę (id, upvotes, downvotes) podobnie jak member\_and\_votes\_view lecz wynik ogranicza \\
+        do głosów dotyczących danej akcji.
+        \item[] \textbf{member\_and\_votes\_project} \\ 
+        Zwraca tabelę (id, upvotes, downvotes) podobnie jak member\_and\_votes\_view lecz wynik ogranicza \\
+        do głosów dotyczących danego projektu.
+        \item[] \textbf{index\_exists(INT)} \\ 
+        Zwraca wartość true jeśli podany w argumencie identyfikator istnieje w bazie, false wpp.
+        \item[] \textbf{member\_exists(INT)} \\ 
+        Zwraca wartość true jeśli podany w argumencie identyfikator użytkownika istnieje w tabeli member, false wpp.
+        \item[] \textbf{authority\_exists(INT)} \\ 
+        Zwraca wartość true jeśli podany w argumencie identyfikator oragnu władzy istnieje w tabeli authority, false wpp.
+        \item[] \textbf{project\_exists(INT)} \\ 
+        Zwraca wartość true jeśli podany w argumencie identyfikator projektu istnieje w tabeli project, false wpp.
+        \item[] \textbf{action\_exists(INT)} \\ 
+        Zwraca wartość true jeśli podany w argumencie identyfikator akcji istnieje w tabeli action, false wpp.
+    \end{itemize}
+\end{itemize}
+
+Tworzony użytkownik "app" dostaje uprawnienia do wykonania SELECT, INSERT, UPDATE na tabelach bazy danych.\\
+Hasła są szyfrowane za pomocą md5. 
+
+
 
 \end{document}

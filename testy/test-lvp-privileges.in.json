@@ -1,0 +1,4 @@
+{ "open": { "database": "student", "login": "init", "password": "qwerty"}}
+{ "actions": { "timestamp": 1557477055, "member": 4, "password": "abc", "type": "support"}}
+{ "votes": { "timestamp": 1557479004, "member": 4, "password": "abc"}}
+{ "projects": { "timestamp": 1557479004, "member": 4, "password": "abc"}}
