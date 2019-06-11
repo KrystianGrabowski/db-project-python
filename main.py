@@ -9,8 +9,8 @@ class Database:
     """
     def __init__(self, db_init, debug_mode):
         """ Ustawia trybu debugowania oraz inicjalizacji  
-
         Parameters:
+
             db_init (bool): inicjalizacja bazy danych
             debug_mode (bool): tryb debugowania
         """
@@ -18,7 +18,7 @@ class Database:
         self.__debug_mode = debug_mode
 
     def connect_to_database(self, database_name, user_name, password):
-        """ Ustanawia polaczenie z baza danych
+        """ Ustanawia polaczenie z baza danych.
 
         Parameters:
             database_name (str): nazwa bazy danych
@@ -28,27 +28,27 @@ class Database:
         self.conn = psycopg2.connect(dbname=database_name, user=user_name, password=password, host="localhost")
         self.cur = self.conn.cursor()
 
-    def database_initialization(self, file_name):
-        """ Ustanawia polaczenie z baza danych
-
-        Parameters:
-            file_name (str): nazwa pliku z polecami tworzacymi elementy bazy
-        """
-        self.read_from_file_sql(file_name)
-    
     def read_from_file_sql(self, file_name):
         """Czyta z pliku polecenia sql oraz je wykonuje
-
         Parameters:
             file_name (str): nazwa pliku z polecami sql
         """
         f = open(file_name, 'r')
         self.cur.execute(f.read())
         self.conn.commit()
+
+    def database_initialization(self, file_name):
+        """ Wywoluje funkcje read_from_file_sql z nazwa pliku podana w argumencie.
+
+        Parameters:
+            file_name (str): nazwa pliku z polecami tworzacymi elementy bazy
+        """
+        self.read_from_file_sql(file_name)
+
     
     def interpret_string_as_json(self, string):
         """Przeksztalca napis na slownik oraz przekazuje go do funkcji,
-        ktora wykona polecenia w nim zawarte
+        ktora wykona polecenia w nim zawarte.
 
         Parameters:
             string (str): napis bedacy obiektem JSON
@@ -58,7 +58,7 @@ class Database:
         self.function_interpreter(key, f_dict[key])
 
     def read_from_file(self, file_name):
-        """Wczytuje z pliku obiekty JSON
+        """Wczytuje z pliku obiekty JSON oraz przekazuje je do fukcji interpretujacej.
 
         Parameters:
             file_name (str): nazwa pliku
@@ -70,7 +70,7 @@ class Database:
 
     def user_has_privileges(self, is_leader, function_name):
         """Sprawdza czy uzytkownik ma uprawnienia aby wywolac
-        funkcje
+        funkcje.
 
         Parameters:
             is_leader (bool): informuje czy uzytkownik jest leaderem
@@ -88,7 +88,7 @@ class Database:
 
     def check_user_privileges(self, is_leader, function_name):
         """Sprawdza czy uzytkownik ma uprawnienia aby wywolac
-        funkcje. Jesli nie ma uprawnien zglasza wyjatek
+        funkcje. Jesli nie ma uprawnien zglasza wyjatek.
 
         Parameters:
             is_leader (bool): informuje czy uzytkownik jest leaderem
@@ -97,9 +97,23 @@ class Database:
         if not self.user_has_privileges(is_leader, function_name):
             raise Exception('User has no privileges to perform action')
 
+    def compare_passwords(self, password, db_password):
+        """Sprawdza za pomoca modulu pgcrypto czy haslo password
+        odpowiada zaszyfrowanemu haslu db_password 
+
+        Parameters:
+            password (str): haslo podane przez uzytkownika
+            db_password (str): zaszyfrowane haslo z bazy danych
+        
+        Return:
+            (bool): True jesli hasla sie zgadzaja False wpp
+        """
+        self.cur.execute("SELECT crypt(%s, %s) = %s;", (password, db_password, db_password))
+        return self.cur.fetchone()[0]
+    
     def check_password(self, id, password):
         """Sprawdza czy haslem uzytkownika o identyfikatorze id
-        jest password
+        jest password.
 
         Parameters:
             id (int): identyfikator uzytkownika
@@ -115,19 +129,26 @@ class Database:
             return True if self.compare_passwords(password, user_tuple[1]) else False
         return None
 
-    def compare_passwords(self, password, db_password):
-        """Sprawdza za pomoca modulu pgcrypto czy haslo password
-        odpowiada zaszyfrowanemu haslu db_password 
+    def update_user_timestamp(self, id, user_password, password, user_timestamp, current_timestamp, is_dead):
+        """Aktualizuje czas ostatniej aktywnosci uzytkownika. W przypadku zlego hasla
+        lub zamrozenia zglasza wyjatek.
 
         Parameters:
+            id (int): identyfikator uzytkownika
+            user_password (str): zaszyfrowane haslo z bazy danych 
             password (str): haslo podane przez uzytkownika
-            db_password (str): zaszyfrowane haslo z bazy danych
-        
-        Return:
-            (bool): True jesli hasla sie zgadzaja False wpp
+            user_timestamp (int): czas ostatniej aktywnosci usera, UNIX timestamp
+            current_timestamp (int): UNIX timestamp
+            is_dead (bool): status zamrozenia uzytkownika
         """
-        self.cur.execute("SELECT crypt(%s, %s) = %s;", (password, db_password, db_password))
-        return self.cur.fetchone()[0]
+        if self.compare_passwords(password, user_password):
+            if is_dead or self.dead_user(user_timestamp, current_timestamp):
+                self.cur.execute("UPDATE member SET dead='true' WHERE id=%s", (id,))
+                self.conn.commit()
+                raise Exception('User is dead')
+            self.cur.execute("UPDATE member SET last_activity=to_timestamp(%s) WHERE id=%s;", (current_timestamp, id))
+        else:
+            raise Exception('Wrong password')
 
     def update_user_return_true_if_leader(self, id, password, last_activity, can_create):
         """Sprawdza czy uzytkownik istnieje w bazie. Jesli istnieje to aktualizuje jego
@@ -150,31 +171,9 @@ class Database:
             self.insert_user(id, password, last_activity, 'false')
             return False
         raise Exception("Cannot create user")
-        
-
-    def update_user_timestamp(self, id, user_password, password, user_timestamp, current_timestamp, is_dead):
-        """Aktualizuje czas ostatniej aktywnosci uzytkownika. W przypadku zlego hasla
-        lub zamrozenia zglasza wyjatek
-
-        Parameters:
-            id (int): identyfikator uzytkownika
-            user_password (str): zaszyfrowane haslo z bazy danych 
-            password (str): haslo podane przez uzytkownika
-            user_timestamp (int): czas ostatniej aktywnosci usera, UNIX timestamp
-            current_timestamp (int): UNIX timestamp
-            is_dead (bool): status zamrozenia uzytkownika
-        """
-        if self.compare_passwords(password, user_password):
-            if is_dead or self.dead_user(user_timestamp, current_timestamp):
-                self.cur.execute("UPDATE member SET dead='true' WHERE id=%s", (id,))
-                self.conn.commit()
-                raise Exception('User is dead')
-            self.cur.execute("UPDATE member SET last_activity=to_timestamp(%s) WHERE id=%s;", (current_timestamp, id))
-        else:
-            raise Exception('Wrong password')
 
     def update_dead_status(self, current_timestamp):
-        """Aktualizuje status zamrozenia wszystkich uzytkownikow
+        """Aktualizuje status zamrozenia wszystkich uzytkownikow.
 
         Parameters:
             current_timestamp (int): UNIX timestamp
@@ -182,7 +181,7 @@ class Database:
         self.cur.execute("UPDATE member SET dead='true' WHERE last_activity + interval '1 year' <  to_timestamp(%s);", (current_timestamp, ))      
 
     def dead_user(self, user_timestamp, current_timestamp):
-        """Sprawdza czy uzytkownik byl nieaktywny dluzej niz rok
+        """Sprawdza czy uzytkownik byl nieaktywny dluzej niz rok.
 
         Parameters:
             user_timestamp (int): czas ostatniej aktywnosci usera, UNIX timestamp
@@ -197,7 +196,7 @@ class Database:
     # SELECT _START_
 
     def get_member_by_id(self, id):
-        """Zwraca krotke uzytkownika o podanym id
+        """Zwraca krotke uzytkownika o podanym id.
 
         Parameters:
             id (int): identyfikator uzytkownika
@@ -209,7 +208,7 @@ class Database:
         return self.cur.fetchone()
 
     def get_project_by_id(self, id):
-        """Zwraca krotke projektu o podanym id
+        """Zwraca krotke projektu o podanym id.
 
         Parameters:
             id (int): identyfikator projektu
@@ -222,11 +221,11 @@ class Database:
     
     # SELECT _END_
 
-    # INSERT _START_
+    # CHECK _START_
 
     def id_exists(self, id):
         """Sprawdza czy identyfikator istnieje w bazie.
-        Jesli tak zglasza wyjatek
+        Jesli tak zglasza wyjatek.
 
         Parameters:
             id (int): identyfikator
@@ -238,7 +237,7 @@ class Database:
 
     def id_exists_in_column(self, id_dict):
         """Sprawdza czy identyfikatory istnieje w odpowiednich tabelach.
-        Jesli ktorys identyfikator nie istnieje zglasza wyjatek
+        Jesli ktorys identyfikator nie istnieje zglasza wyjatek.
 
         Parameters:
             id_dict (int): slownik zawierajacy nazwy tabel oraz identyfikatory
@@ -267,7 +266,7 @@ class Database:
     def fields_have_different_id(self, name, args):
         """Sprawdza czy odpowiednie pola w pojedynczym wywolaniu funkcji maja
         rozne identyfikatory. Jesli odpowiednie pola maja te same identyfikatory
-        zglaszany jest wyjatek
+        zglaszany jest wyjatek.
 
         Parameters:
             name (str): nazwa funkcji
@@ -303,8 +302,56 @@ class Database:
         if len(id_arr) != len(set(id_arr)):
             raise Exception("Two or more fields have the same value")
 
+    def check_correctness(self, name, args, can_create):
+        """Aktualizuje czas aktywnosci uzytkownika oraz zapewnia ze wszystkie warunki
+        zostaly spelnione aby poprawnie przeprowadzic operacje.
+
+        Parameters:
+            name (str) : nazwa funkcji
+            args (dict): dane nowego uzytkownika
+            can_create(bool) : mozliwosc utworzenia nowego uzytkownika
+        """
+        is_leader = self.update_user_return_true_if_leader(args['member'], args['password'], args['timestamp'], can_create)
+        self.check_user_privileges(is_leader, name)
+
+
+    def check_project_existence(self, args):
+        """Sprawdza czy projekt istnieje w bazie danych. W przypadku braku
+        projektu w bazie oraz braku organu wladzy w args zglasza wyjatek
+
+        Parameters:
+            args (dict): slownik zawierajacy dane projektu
+        """
+        if self.get_project_by_id(args["project"]) is None:
+            if "authority" in args:
+                self.insert_project(args["project"], args["authority"])
+            else:
+                raise KeyError('No project with given id, please enter the authority')
+
+    def user_can_vote_for_action(self, user_id, action_id):
+        """Sprawdza czy uzytkownik ma prawo glosowac w akcji.
+
+        Parameters:
+            user_id (int): identyfikator uzytkownika
+            action_id (int): identyfikator akcji
+
+        Return:
+            (bool) True jesli uzytkownk moze glosowac w akcji False wpp
+        """
+        self.cur.execute("SELECT * FROM upvote WHERE member_id=%s AND action_id=%s;", (user_id, action_id))
+        if self.cur.fetchone() is not None:
+            return False
+        self.cur.execute("SELECT * FROM downvote WHERE member_id=%s AND action_id=%s;", (user_id, action_id))
+        if self.cur.fetchone() is not None:
+            return False
+        return True
+
+    # CHECK _END_
+
+    # INSERT _START_
+
     def insert_user(self, id, password, last_activity, leader):
-        """Dodaje uzytkownika do tabeli member nadajac mu podane parametry
+        """Dodaje uzytkownika do tabeli member nadajac mu podane parametry.
 
         Parameters:
             id (int): identyfikator uzytkownika
@@ -317,13 +364,11 @@ class Database:
                             VALUES(%s, crypt(%s, gen_salt('md5')), to_timestamp(%s), %s );""", (id, password, last_activity, leader));
 
     def insert_project(self, id, authority_id):
-        """Dodaje uzytkownika do tabeli member nadajac mu podane parametry
+        """Dodaje uzytkownika do tabeli member nadajac mu podane parametry.
 
         Parameters:
-            id (int): identyfikator uzytkownika
-            password (str): haslo uzytkownika
-            last_activity (int): UNIX timestamp
-            leader (bool): informuje czy uzytkownik jest leaderem
+            id (int): identyfikator projektu
+            authority_id (int): identyfikator organu wladzy
         """
         self.id_exists(id)
         self.cur.execute("SELECT * FROM authority a WHERE a.id = %s;", (authority_id,))
@@ -339,7 +384,7 @@ class Database:
     # Funcje API _START_
 
     def open_function(self, args):
-        """Otwiera polaczenie z baza danych za pomoca podanych danych logowania
+        """Otwiera polaczenie z baza danych za pomoca podanych danych logowania.
 
         Format: 
             open <database> <login> <password> 
@@ -358,7 +403,7 @@ class Database:
             
 
     def leader_function(self, args):
-        """Dodaje nowego uzytkownika ktory zostaje leaderem
+        """Dodaje nowego uzytkownika ktory zostaje leaderem.
 
         Format: 
             leader <timestamp> <password> <member>
@@ -367,35 +412,10 @@ class Database:
             args (dict): dane nowego uzytkownika
         """
         self.insert_user(args['member'], str(args['password']), args['timestamp'], 'true')
-    
-
-    def check_correctness(self, name, args, can_create):
-        """Aktualizuje czas aktywnosci uzytkownika oraz zapewnia ze wszystkie warunki
-        zostaly spelnione aby poprawnie przeprowadzic operacje
-
-        Parameters:
-            name (str) : nazwa funkcji
-            args (dict): dane nowego uzytkownika
-            can_create(bool) : mozliwosc utworzenia nowego uzytkownika
-        """
-        is_leader = self.update_user_return_true_if_leader(args['member'], args['password'], args['timestamp'], can_create)
-        self.check_user_privileges(is_leader, name)
-
-    def check_project_existence(self, args):
-        """Sprawdza czy projekt istnieje w bazie danych. W przypadku braku
-        projektu w bazie oraz braku organu wladzy w args zglasza wyjatek
-
-        Parameters:
-            args (dict): slownik zawierajacy dane projektu
-        """
-        if self.get_project_by_id(args["project"]) is None:
-            if "authority" in args:
-                self.insert_project(args["project"], args["authority"])
-            else:
-                raise KeyError('No project with given id, please enter the authority')        
+       
 
     def protest_function(self, args):
-        """Dodaje protest do bazy danych
+        """Dodaje protest do bazy danych.
 
         Format: 
             protest <timestamp> <member> <password> <action> <project> [ <authority> ]
@@ -411,7 +431,7 @@ class Database:
                             VALUES(%s, %s, %s, %s);""", (args["action"], args["project"], args["member"], 'false'));
 
     def support_function(self, args):
-        """Dodaje wsparcie do bazy danych
+        """Dodaje wsparcie do bazy danych.
 
         Format: 
             support <timestamp> <member> <password> <action> <project> [ <authority> ]
@@ -427,26 +447,8 @@ class Database:
                             VALUES(%s, %s, %s, %s );""", (args["action"], args["project"], args["member"], 'true'));
     
 
-    def user_can_vote_for_action(self, user_id, action_id):
-        """Sprawdza czy uzytkownik ma prawo glosowac w akcji
-
-        Parameters:
-            user_id (int): identyfikator uzytkownika
-            action_id (int): identyfikator akcji
-
-        Return:
-            (bool) True jesli uzytkownk moze glosowac w akcji False wpp
-        """
-        self.cur.execute("SELECT * FROM upvote WHERE member_id=%s AND action_id=%s;", (user_id, action_id))
-        if self.cur.fetchone() is not None:
-            return False
-        self.cur.execute("SELECT * FROM downvote WHERE member_id=%s AND action_id=%s;", (user_id, action_id))
-        if self.cur.fetchone() is not None:
-            return False
-        return True
-
     def upvote_function(self, args):
-        """Dodaje glos na akcje do bazy danych
+        """Dodaje glos na akcje do bazy danych.
 
         Format: 
             upvote <timestamp> <member> <password> <action> 
@@ -464,7 +466,7 @@ class Database:
             raise Exception('User has already voted')
 
     def downvote_function(self, args):
-        """Dodaje glos na akcje do bazy danych
+        """Dodaje glos na akcje do bazy danych.
 
         Format: 
             downvote <timestamp> <member> <password> <action>
@@ -483,14 +485,13 @@ class Database:
 
     def actions_function(self, args):
         """Zwraca liste wszystkich akcji. Jesli podano typ, projekt/organ wladzy
-        to ogranicza sie tylko do akcji o wspomnianym typie
-
+        to ogranicza sie tylko do akcji o wspomnianym typie.
+        
         Format: 
             actions <timestamp> <member> <password> [ <type> ] [ <project> | <authority> ] 
-
+        
         Parameters:
             args (dict): slownik zawierajacy dane glosu
-
         SQL:
             <action> <type> <project> <authority> <upvotes> <downvotes>
         """
@@ -498,7 +499,7 @@ class Database:
         self.check_correctness("actions", args, False)
         if 'type' in args:
             if args['type'] != 'support' and args['type'] != 'protest':
-                raise Exception("Unknown action type")
+                raise Exception("Unknown action type") 
         """
         self.fields_have_different_id("actions", args)
         if 'project' in args:
@@ -525,7 +526,7 @@ class Database:
 
     def projects_function(self, args):
         """Zwraca liste wszystkich dzialan wraz z id organu wladzy. Jesli podano
-        organ wladzy ogranicza sie tylko do projektow pod jego zarzadem
+        organ wladzy ogranicza sie tylko do projektow pod jego zarzadem.
 
         Format: 
             projects <timestamp> <member> <password> [ authority ]
@@ -585,7 +586,7 @@ class Database:
 
     def trolls_function(self, args):
         """Zwraca liste wszystkich uzytkownikow, ktorzy zaproponowali akcje 
-        majace sumarycznie wiecej downvotes niz upvotes na chwile podana w args
+        majace sumarycznie wiecej downvotes niz upvotes na chwile podana w args.
 
         Format: 
             trolls <timestamp>
@@ -611,7 +612,7 @@ class Database:
 
     def function_interpreter(self, name, args):
         """Interpretuje funkcje za pomoca lambda wyrazenia przekazujac sterowanie 
-        do odpowiedniej funkcji. Wywoluje funkcje zwracajaca status
+        do odpowiedniej funkcji. Wywoluje funkcje zwracajaca status.
 
         Parameters:       
             name (str): nazwa funkcji
@@ -644,7 +645,7 @@ class Database:
 
     
     def start_stream(self):
-        """Otwiera strumien wejscia
+        """Otwiera strumien wejscia. Czyta z niego az do konca strumienia (EOF).
         """
         while 1:
             try: 
@@ -659,7 +660,7 @@ class Database:
     def status(self, error_occured, data):
         """Zwraca status operacji. Jesli nie wystapil zaden blad 
         zatwierdza zmiany wprowadzone w bazie oraz zwraca status OK z danymi.
-        Jesli wystapil blad zwraca status error
+        Jesli wystapil blad zwraca status ERROR.
 
         Parameters:   
             error_occured (bool): status wystapienia bledu
