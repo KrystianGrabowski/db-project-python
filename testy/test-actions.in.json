@@ -1,0 +1,29 @@
+{ "open": { "database": "student", "login": "app", "password": "qwerty"}}
+{ "support": { "timestamp": 1557479000, "password": "abc", "member": 1, "action":402, "project":7000, "authority":30000}}
+{ "protest": { "timestamp": 1557479001, "password": "abc", "member": 1, "action":301, "project":6000, "authority":20000}}
+{ "protest": { "timestamp": 1557479002, "password": "abc", "member": 1, "action":303, "project":5000, "authority":10000}}
+{ "protest": { "timestamp": 1557479003, "password": "abc", "member": 1, "action":302, "project":5000}}
+{ "support": { "timestamp": 1557479004, "password": "abc", "member": 1, "action":401, "project":6000}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "type": "support"}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "type": "protest"}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "type": "support", "project": 6000}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "type": "protest", "project": 5000}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "type": "support", "authority": 30000}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "type": "protest", "authority": 10000}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "project": 5000}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "authority": 20000}}
+{ "actions": { "timestamp": 1557477055, "member": 4, "password": "abc", "authority": 20000}}
+{ "downvote": { "timestamp": 1557477055, "password": "abc", "member": 1, "action":402}}
+{ "upvote": { "timestamp": 1557477055, "password": "abc", "member": 1, "action":302}}
+{ "downvote": { "timestamp": 1557477055, "password": "asd", "member": 2, "action":402}}
+{ "downvote": { "timestamp": 1557477055, "password": "abc", "member": 1, "action":301}}
+{ "upvote": { "timestamp": 1557477055, "password": "abc", "member": 1, "action": 303}}
+{ "downvote": { "timestamp": 1557477055, "password": "abc", "member": 1, "action":401}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "type": "support"}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "type": "protest"}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "type": "support", "project": 6000}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "type": "protest", "project": 5000}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "type": "support", "authority": 30000}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "type": "protest", "authority": 10000}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "project": 5000}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "authority": 20000}}

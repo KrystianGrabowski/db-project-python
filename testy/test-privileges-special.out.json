@@ -1,0 +1,17 @@
+{ "status": "OK"}
+{ "status": "OK"}
+{ "status": "OK"}
+{ "status": "OK"}
+{ "status": "OK"}
+{ "status": "OK", "data": [[500, "support", 5000, 10000, 1, 0]]}
+{ "status": "OK", "data": [[1, 0, 0], [2, 0, 0], [3, 1, 1]]}
+{ "status": "OK", "data": [[5000, 10000]]}
+{ "status": "OK", "data": []}
+{ "status": "OK"}
+{ "status": "OK"}
+{ "status": "OK"}
+{ "status": "OK"}
+{ "status": "OK", "data": [[500, "support", 5000, 10000, 1, 0], [600, "support", 6000, 20000, 1, 0]] }
+{ "status": "OK", "data": [[1, 1, 1], [2, 0, 0], [3, 1, 1]] }
+{ "status": "OK", "data": [[5000, 10000]] }
+{ "status": "OK", "data": [] }

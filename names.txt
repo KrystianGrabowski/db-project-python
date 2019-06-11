@@ -12,3 +12,13 @@ test-updown-init
 test-updown
 test-privileges-init
 test-privileges
+test-privileges-init
+test-privileges-special
+test-privileges-init
+test-actions
+test-privileges-init
+test-projects
+test-privileges-init
+test-votes
+test-privileges-init
+test-trolls

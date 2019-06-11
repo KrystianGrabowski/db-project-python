@@ -9,25 +9,36 @@ def call_and_compare(filename):
         stdoutdata = subprocess.getoutput("python3 main.py -f 'testy/{}.in.json'".format(filename))
     result = compare("testy/{}.out.json".format(filename), stdoutdata)
     to_prt = "OK" if result else "FAIL"
-    print("{} {}".format(filename, to_prt))
+    print("> {} {}".format(filename, to_prt))
 
 def compare(outputfile, stdoutdata):
     stdoutdata = stdoutdata.split("\n")
     f = open(outputfile, 'r')
     it = 0
+    line_number = 0
     for line in f:
+        line_number += 1
         a = json.loads(line)
         b = json.loads(stdoutdata[it])
         it += 1
+        #print("A -> {}".format(a["status"]))
+        #print("B -> {}".format(b["status"]))
         if 'data' in a and 'data' in b:
+
             if a["status"] != b["status"]:
+                print("[cmp 1] line {} \nExpected\n    {}\nOutput\n    {} ".format(it, a, b))
                 return False
             if a["data"] != b["data"]:
-                    return False
-
-        if 'data' not in a and 'data' not in b:
-            if a["status"] != b["status"]:
+                print("[cmp 2] line {} \nExpected\n    {}\nOutput\n    {} ".format(it, a, b))
                 return False
+
+        elif 'data' not in a and 'data' not in b:
+            if a["status"] != b["status"]:
+                print("[cmp 3] line {} \nExpected\n    {}\nOutput\n    {} ".format(it, a, b))
+                return False
+        else:
+            print("[cmp 4] line {} \nExpected\n    {}\nOutput\n    {} ".format(it, a, b))
+            return False
     return True
                 
 

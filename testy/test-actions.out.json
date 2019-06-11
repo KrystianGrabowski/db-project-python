@@ -1,0 +1,29 @@
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK", "data": [ [401, "support", 6000, 20000, 0, 0], [402, "support", 7000, 30000, 0, 0] ] }
+{ "status": "OK", "data": [ [301, "protest", 6000, 20000, 0, 0], [302, "protest", 5000, 10000, 0, 0], [303, "protest", 5000, 10000, 0, 0] ] }
+{ "status": "OK", "data": [ [401, "support", 6000, 20000, 0, 0]] }
+{ "status": "OK", "data": [ [302, "protest", 5000, 10000, 0, 0], [303, "protest", 5000, 10000, 0, 0] ] }
+{ "status": "OK", "data": [ [402, "support", 7000, 30000, 0, 0] ] }
+{ "status": "OK", "data": [ [302, "protest", 5000, 10000, 0, 0], [303, "protest", 5000, 10000, 0, 0] ] }
+{ "status": "OK", "data": [ [302, "protest", 5000, 10000, 0, 0], [303, "protest", 5000, 10000, 0, 0] ] }
+{ "status": "OK", "data": [ [301, "protest", 6000, 20000, 0, 0], [401, "support", 6000, 20000, 0, 0] ] }
+{ "status": "ERROR" }
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK", "data": [ [401, "support", 6000, 20000, 0, 1], [402, "support", 7000, 30000, 0, 2] ] }
+{ "status": "OK", "data": [ [301, "protest", 6000, 20000, 0, 1], [302, "protest", 5000, 10000, 1, 0], [303, "protest", 5000, 10000, 1, 0] ] }
+{ "status": "OK", "data": [ [401, "support", 6000, 20000, 0, 1]] }
+{ "status": "OK", "data": [ [302, "protest", 5000, 10000, 1, 0], [303, "protest", 5000, 10000, 1, 0] ] }
+{ "status": "OK", "data": [ [402, "support", 7000, 30000, 0, 2] ] }
+{ "status": "OK", "data": [ [302, "protest", 5000, 10000, 1, 0], [303, "protest", 5000, 10000, 1, 0] ] }
+{ "status": "OK", "data": [ [302, "protest", 5000, 10000, 1, 0], [303, "protest", 5000, 10000, 1, 0] ] }
+{ "status": "OK", "data": [ [301, "protest", 6000, 20000, 0, 1], [401, "support", 6000, 20000, 0, 1] ] }

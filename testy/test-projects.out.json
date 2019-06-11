@@ -1,0 +1,11 @@
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK" }
+{ "status": "OK", "data": [[5000, 10000], [6000, 20000], [6500, 20000], [7000, 30000]] }
+{ "status": "OK", "data": [[6000, 20000], [6500, 20000]] }
+{ "status": "OK", "data": [[7000, 30000]]}
+{ "status": "ERROR" }

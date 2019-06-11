@@ -1,0 +1,11 @@
+{ "open": { "database": "student", "login": "app", "password": "qwerty"}}
+{ "support": { "timestamp": 1557479000, "password": "abc", "member": 1, "action":402, "project":7000, "authority":30000}}
+{ "protest": { "timestamp": 1557479001, "password": "abc", "member": 1, "action":301, "project":6000, "authority":20000}}
+{ "protest": { "timestamp": 1557479001, "password": "abc", "member": 1, "action":366, "project":6500, "authority":20000}}
+{ "protest": { "timestamp": 1557479002, "password": "abc", "member": 1, "action":303, "project":5000, "authority":10000}}
+{ "protest": { "timestamp": 1557479003, "password": "abc", "member": 1, "action":302, "project":5000}}
+{ "support": { "timestamp": 1557479004, "password": "abc", "member": 1, "action":401, "project":6000}}
+{ "projects": { "timestamp": 1557479004, "member": 1, "password": "abc"}}
+{ "projects": { "timestamp": 1557479004, "member": 1, "password": "abc", "authority": 20000}}
+{ "projects": { "timestamp": 1557479004, "member": 1, "password": "abc", "authority": 30000}}
+{ "projects": { "timestamp": 1557479004, "member": 4, "password": "abc"}}

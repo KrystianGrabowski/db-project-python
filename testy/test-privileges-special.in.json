@@ -1,0 +1,17 @@
+{ "open": { "database": "student", "login": "init", "password": "qwerty"}}
+{ "support": { "timestamp": 1557475700, "password": "123", "member": 3, "action":500, "project":5000, "authority":10000}}
+{ "protest": { "timestamp": 1557475702, "password": "123", "member": 3, "action":501, "project":5000, "authority":10000}}
+{ "upvote": { "timestamp": 1557475702, "password": "123", "member": 3, "action":500}}
+{ "downvote": { "timestamp": 1557475703, "password": "123", "member": 3, "action":501}}
+{ "actions": { "timestamp": 1557477055, "member": 3, "password": "123", "type": "support"}}
+{ "votes": { "timestamp": 1557475705, "password": "123", "member": 3}}
+{ "projects": { "timestamp": 1557477055, "member": 3, "password": "123", "authority": 10000}}
+{ "trolls": { "timestamp": 1557477055 }}
+{ "support": { "timestamp": 1557475700, "password": "abc", "member": 1, "action":600, "project":6000, "authority":20000}}
+{ "protest": { "timestamp": 1557475702, "password": "abc", "member": 1, "action":601, "project":6000, "authority":20000}}
+{ "upvote": { "timestamp": 1557475702, "password": "abc", "member": 1, "action":600}}
+{ "downvote": { "timestamp": 1557475703, "password": "abc", "member": 1, "action":601}}
+{ "actions": { "timestamp": 1557477055, "member": 1, "password": "abc", "type": "support"}}
+{ "votes": { "timestamp": 1557475705, "password": "abc", "member": 1}}
+{ "projects": { "timestamp": 1557477055, "member": 1, "password": "abc", "authority": 10000}}
+{ "trolls": { "timestamp": 1557477055 }}

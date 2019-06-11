@@ -79,6 +79,8 @@ class Database:
         Return:
             (bool) True jesli uzytkownik moze wykonac akcje False wpp
         """
+        if self.__init_user:
+            return True
         app_user_privileges = ["protest", "support", "downvote", "upvote"]
         if not is_leader and function_name not in app_user_privileges:
             return False
@@ -342,9 +344,15 @@ class Database:
         Parameters:
             args (dict): dane logowania do bazy
         """
+        if args['login'] == 'init':
+            self.__init_user = True
+        else:
+            self.__init_user= False
         self.connect_to_database(args['database'], args['login'], args['password'])
+        
         if self.__db_init and args['login'] == 'init':
-                self.database_initialization("db_init.sql")
+            self.database_initialization("db_init.sql")
+            
 
     def leader_function(self, args):
         """Dodaje nowego uzytkownika ktory zostaje leaderem
@@ -581,7 +589,7 @@ class Database:
                                 (CASE WHEN dead = FALSE THEN 'true' ELSE 'false' END)
                             FROM member
                             WHERE downvotes-upvotes > 0
-                            ORDER BY downvotes-upvotes;""")
+                            ORDER BY downvotes-upvotes, id;""")
         self.data = self.cur.fetchall()
         
 
@@ -675,7 +683,7 @@ def main():
         db.read_from_file(args.filename[0])
     else:
         db.start_stream()
-
+    
     db.cur.close()
     db.conn.close()
 
