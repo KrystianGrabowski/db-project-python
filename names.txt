@@ -24,3 +24,5 @@ test-privileges-init
 test-trolls
 test-privileges-init
 test-lvp-privileges
+test-scherbak-init
+test-scherbak

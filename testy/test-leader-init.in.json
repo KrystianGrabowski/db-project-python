@@ -4,3 +4,4 @@
 { "leader": { "timestamp": 1557474000, "password": "abc", "member": 1}}
 { "leader": { "timestamp": 1557474000, "password": "aaa", "member": 2}}
 { "leader": { "timestamp": 1557474000, "password": "abc", "member": 3}}
+{ "leader": { "password": "aaa", "member": 4}}

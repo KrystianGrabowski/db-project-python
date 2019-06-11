@@ -243,6 +243,7 @@ class Database:
         Parameters:
             id_dict (int): slownik zawierajacy nazwy tabel oraz identyfikatory
         """
+        
         if 'authority' in id_dict:
             self.cur.execute("SELECT authority_exists(%s);", (id_dict['authority'], ))
             if not self.cur.fetchone()[0]:
@@ -493,17 +494,19 @@ class Database:
         SQL:
             <action> <type> <project> <authority> <upvotes> <downvotes>
         """
-        self.fields_have_different_id("actions", args)
+        
         self.check_correctness("actions", args, False)
         if 'type' in args:
             if args['type'] != 'support' and args['type'] != 'protest':
                 raise Exception("Unknown action type")
-
+        """
+        self.fields_have_different_id("actions", args)
         if 'project' in args:
             self.id_exists_in_column({'project': args['project']})
         
         if 'authority' in args:
             self.id_exists_in_column({'authority': args['authority']})
+        """
 
         if 'type' in args and 'project' not in args and 'authority' not in args:
             self.cur.execute("SELECT * FROM action_and_votes_view where action_type=%s ORDER BY id;", (args["type"], ))
@@ -533,9 +536,12 @@ class Database:
         SQL:
             <project> <authority>
         """
+
+        """
         self.fields_have_different_id("projects", args)
         if 'authority' in args:
             self.id_exists_in_column({'authority': args['authority']})
+        """
         self.check_correctness("actions", args, False)
         if 'authority' in args:
             self.cur.execute("SELECT * FROM project WHERE authority_id = %s ORDER BY id", (args['authority'], ))
@@ -559,11 +565,14 @@ class Database:
         SQL:
             <member> <upvotes> <downvotes>
         """
+
+        """
         self.fields_have_different_id("votes", args)
         if 'action' in args:
             self.id_exists_in_column({'action': args['action']})
         if 'project' in args:
             self.id_exists_in_column({'project': args['project']})
+        """
 
         self.check_correctness("votes", args, False)
         if 'action' in args:
