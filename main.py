@@ -129,14 +129,15 @@ class Database:
         self.cur.execute("SELECT crypt(%s, %s) = %s;", (password, db_password, db_password))
         return self.cur.fetchone()[0]
 
-    def update_user_return_true_if_leader(self, id, password, last_activity):
+    def update_user_return_true_if_leader(self, id, password, last_activity, can_create):
         """Sprawdza czy uzytkownik istnieje w bazie. Jesli istnieje to aktualizuje jego
-        czas ostatniej aktywnosci. Jesli nie istnieje to go tworzy.
+        czas ostatniej aktywnosci. Jesli nie istnieje i can_create ma wartosc True to go tworzy.
 
         Parameters:
             id (int): identyfikator uzytkownika
             password (str): haslo podane przez uzytkownika
             last_activity (int): UNIX timestamp
+            can_create(bool): mozliwosc utworzenia nowego uzytkownika
         
         Return:
             (bool): True jesli user jest liderem False wpp
@@ -145,9 +146,10 @@ class Database:
         if user_tuple is not None:
             self.update_user_timestamp(id, user_tuple[1], password, user_tuple[2], last_activity, user_tuple[4])
             return user_tuple[3]
-        else:
+        elif can_create:
             self.insert_user(id, password, last_activity, 'false')
             return False
+        raise Exception("Cannot create user")
         
 
     def update_user_timestamp(self, id, user_password, password, user_timestamp, current_timestamp, is_dead):
@@ -366,15 +368,16 @@ class Database:
         self.insert_user(args['member'], str(args['password']), args['timestamp'], 'true')
     
 
-    def check_correctness(self, name, args):
+    def check_correctness(self, name, args, can_create):
         """Aktualizuje czas aktywnosci uzytkownika oraz zapewnia ze wszystkie warunki
         zostaly spelnione aby poprawnie przeprowadzic operacje
 
         Parameters:
             name (str) : nazwa funkcji
             args (dict): dane nowego uzytkownika
+            can_create(bool) : mozliwosc utworzenia nowego uzytkownika
         """
-        is_leader = self.update_user_return_true_if_leader(args['member'], args['password'], args['timestamp'])
+        is_leader = self.update_user_return_true_if_leader(args['member'], args['password'], args['timestamp'], can_create)
         self.check_user_privileges(is_leader, name)
 
     def check_project_existence(self, args):
@@ -401,7 +404,7 @@ class Database:
         """
         self.fields_have_different_id("protest", args)
         self.id_exists(args["action"])
-        self.check_correctness("protest", args)
+        self.check_correctness("protest", args, True)
         self.check_project_existence(args)
         self.cur.execute("""INSERT INTO action(id, project_id, member_id, action_type) 
                             VALUES(%s, %s, %s, %s);""", (args["action"], args["project"], args["member"], 'false'));
@@ -417,7 +420,7 @@ class Database:
         """
         self.fields_have_different_id("support", args)
         self.id_exists(args["action"])
-        self.check_correctness("support", args)
+        self.check_correctness("support", args, True)
         self.check_project_existence(args)
         self.cur.execute("""INSERT INTO action(id, project_id, member_id, action_type) 
                             VALUES(%s, %s, %s, %s );""", (args["action"], args["project"], args["member"], 'true'));
@@ -452,7 +455,7 @@ class Database:
         """
         self.fields_have_different_id("upvote", args)
         self.id_exists_in_column({'action': args['action']})
-        self.check_correctness("upvote", args)
+        self.check_correctness("upvote", args, True)
         if self.user_can_vote_for_action(args['member'], args['action']):
             self.cur.execute("""INSERT INTO upvote(member_id, action_id) 
                                 VALUES(%s, %s );""", (args['member'], args['action']))
@@ -470,7 +473,7 @@ class Database:
         """
         self.fields_have_different_id("downvote", args)
         self.id_exists_in_column({'action': args['action']})
-        self.check_correctness("downvote", args)
+        self.check_correctness("downvote", args, True)
         if self.user_can_vote_for_action(args['member'], args['action']):
             self.cur.execute("""INSERT INTO downvote(member_id, action_id) 
                                 VALUES(%s, %s );""", (args["member"], args["action"]))
@@ -490,9 +493,8 @@ class Database:
         SQL:
             <action> <type> <project> <authority> <upvotes> <downvotes>
         """
-        self.id_exists_in_column({'member': args['member']})
         self.fields_have_different_id("actions", args)
-        self.check_correctness("actions", args)
+        self.check_correctness("actions", args, False)
         if 'type' in args:
             if args['type'] != 'support' and args['type'] != 'protest':
                 raise Exception("Unknown action type")
@@ -531,11 +533,10 @@ class Database:
         SQL:
             <project> <authority>
         """
-        self.id_exists_in_column({'member': args['member']})
         self.fields_have_different_id("projects", args)
         if 'authority' in args:
             self.id_exists_in_column({'authority': args['authority']})
-        self.check_correctness("actions", args)
+        self.check_correctness("actions", args, False)
         if 'authority' in args:
             self.cur.execute("SELECT * FROM project WHERE authority_id = %s ORDER BY id", (args['authority'], ))
         else:
@@ -559,13 +560,12 @@ class Database:
             <member> <upvotes> <downvotes>
         """
         self.fields_have_different_id("votes", args)
-        self.id_exists_in_column({'member': args['member']})
         if 'action' in args:
             self.id_exists_in_column({'action': args['action']})
         if 'project' in args:
             self.id_exists_in_column({'project': args['project']})
 
-        self.check_correctness("votes", args)
+        self.check_correctness("votes", args, False)
         if 'action' in args:
             self.cur.execute("SELECT * FROM member_and_votes_action(%s)", (args["action"], ))
         elif 'project' in args:
